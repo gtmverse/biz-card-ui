@@ -96,7 +96,7 @@ function buildCorporateBlue_Front(canvas, fabric) {
   canvas.add(IT(fabric, 'Connecting the World', { left: W*.79 - 55, top: 232, fontSize: 11, fill: 'rgba(255,255,255,0.55)', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', name: 'Tagline' }))
 }
 function buildCorporateBlue_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg: '#1e3a5f', wave: '#4F46E5', logoStroke: 'rgba(255,255,255,0.4)', company: 'Company Name', tagline: 'Connecting the World with Smarter Data', website: 'www.databus.co', qrBg: '#fff', qrCell: '#1e3a5f' })
+  stdBack(canvas, fabric, { bg: '#1e3a5f', wave: '#4F46E5', logoStroke: 'rgba(255,255,255,0.4)', company: 'Company Name', tagline: 'Connecting the World with Smarter Data', website: 'www.example.com', qrBg: '#fff', qrCell: '#1e3a5f' })
 }
 
 function buildCorporateBlack_Front(canvas, fabric) {
@@ -136,7 +136,7 @@ function buildGreenProfessional_Front(canvas, fabric) {
   canvas.add(IT(fabric, 'Green Tech Solutions', { left: W - 168, top: 234, fontSize: 11, fill: '#6ee7b7', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', name: 'Tagline' }))
 }
 function buildGreenProfessional_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg: '#022c22', wave: '#064e3b', logoStroke: '#10b981', company: 'Company Name', tagline: 'Sustainable Data Solutions', website: 'www.databus.co', qrBg: '#064e3b', qrCell: '#10b981' })
+  stdBack(canvas, fabric, { bg: '#022c22', wave: '#064e3b', logoStroke: '#10b981', company: 'Company Name', tagline: 'Sustainable Data Solutions', website: 'www.example.com', qrBg: '#064e3b', qrCell: '#10b981' })
 }
 
 function buildTechModern_Front(canvas, fabric) {
@@ -148,7 +148,7 @@ function buildTechModern_Front(canvas, fabric) {
   canvas.add(IT(fabric, 'Your Name', { left: 30, top: 72, fontSize: 40, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', name: 'Name' }))
   canvas.add(IT(fabric, '< Your Title />', { left: 32, top: 126, fontSize: 13, fill: '#a78bfa', fontFamily: 'Courier New, monospace', name: 'Title' }))
   canvas.add(L(fabric, [30, 160, 320, 160], { stroke: '#7c3aed', strokeWidth: 1, opacity: 0.5, selectable: false, evented: false }))
-  ;['+91 9876543210','john@databus.co','www.databus.co','123 Business St.'].forEach((txt, i) =>
+  ;['+91 9876543210','john@databus.co','www.example.com','123 Business St.'].forEach((txt, i) =>
     canvas.add(IT(fabric, txt, { left: 32, top: 174+i*27, fontSize: 12, fill: '#cbd5e1', fontFamily: 'Courier New, monospace', name: ['Phone','Email','Website','Address'][i] })))
   logoCircle(canvas, fabric, W - 115, 126, 58, '#a78bfa')
   canvas.add(IT(fabric, 'COMPANY', { left: W-178, top: 212, fontSize: 17, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', charSpacing: 60, name: 'Company' }))
@@ -204,7 +204,7 @@ function buildMinimalWhite_Back(canvas, fabric) {
   logoCircle(canvas, fabric, W/2, 100, 65, '#4F46E5', '#eef2ff')
   canvas.add(IT(fabric, 'Company Name', { left:W/2,top:196,fontSize:32,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Company' }))
   canvas.add(IT(fabric, 'Connecting the World', { left:W/2,top:240,fontSize:13,fill:'#6b7280',fontFamily:'Arial, sans-serif',fontStyle:'italic',originX:'center',name:'Tagline' }))
-  canvas.add(IT(fabric, 'www.databus.co', { left:W/2,top:H*.62+28,fontSize:13,fill:'#fff',fontFamily:'Arial, sans-serif',originX:'center',name:'Website' }))
+  canvas.add(IT(fabric, 'www.example.com', { left:W/2,top:H*.62+28,fontSize:13,fill:'#fff',fontFamily:'Arial, sans-serif',originX:'center',name:'Website' }))
   canvas.add(IT(fabric, 'hello@databus.co  ·  +91 9876543210', { left:W/2,top:H*.62+54,fontSize:11,fill:'rgba(255,255,255,0.7)',fontFamily:'Arial, sans-serif',originX:'center',name:'Contact' }))
   qrBox(canvas, fabric, W-108, H-100, '#fff', '#4F46E5')
 }
@@ -229,7 +229,7 @@ function buildVerticalExecutive_Front(canvas, fabric) {
   canvas.add(R(fabric, { left:0,top:H-8,width:W,height:8,fill:'#d4a017',selectable:false,evented:false }))
 }
 function buildVerticalExecutive_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg:'#0f172a',wave:'#d4a017',logoStroke:'#d4a017',company:'Company Name',tagline:'Premium Data Solutions Worldwide',website:'www.databus.co',qrBg:'#1e293b',qrCell:'#d4a017' })
+  stdBack(canvas, fabric, { bg:'#0f172a',wave:'#d4a017',logoStroke:'#d4a017',company:'Company Name',tagline:'Premium Data Solutions Worldwide',website:'www.example.com',qrBg:'#1e293b',qrCell:'#d4a017' })
 }
 
 function buildVerticalMinimal_Front(canvas, fabric) {
@@ -244,11 +244,11 @@ function buildVerticalMinimal_Front(canvas, fabric) {
     canvas.add(IT(fabric, txt, { left:28,top:H*.3+i*44,fontSize:12,fill:'#374151',fontFamily:'Arial, sans-serif',opacity:0.85,name:['Phone','Email','Website','Address'][i] })))
   logoCircle(canvas, fabric, W/2, H*.63, 50, '#6366f1', '#eef2ff')
   canvas.add(IT(fabric, 'Company Name', { left:W/2,top:H*.73,fontSize:13,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Company' }))
-  canvas.add(IT(fabric, 'www.databus.co', { left:W/2,top:H*.78,fontSize:13,fill:'#fff',fontFamily:'Arial, sans-serif',originX:'center',name:'Website Block' }))
+  canvas.add(IT(fabric, 'www.example.com', { left:W/2,top:H*.78,fontSize:13,fill:'#fff',fontFamily:'Arial, sans-serif',originX:'center',name:'Website Block' }))
   canvas.add(IT(fabric, 'Connecting the World', { left:W/2,top:H*.84,fontSize:11,fill:'rgba(255,255,255,0.65)',fontFamily:'Arial, sans-serif',fontStyle:'italic',originX:'center',name:'Tagline Block' }))
 }
 function buildVerticalMinimal_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg:'#ffffff',wave:'#6366f1',logoStroke:'#6366f1',company:'Company Name',companyColor:'#1e1b4b',tagline:'Connecting the World',taglineColor:'#6366f1',website:'www.databus.co',websiteColor:'#6b7280',qrBg:'#eef2ff',qrCell:'#6366f1' })
+  stdBack(canvas, fabric, { bg:'#ffffff',wave:'#6366f1',logoStroke:'#6366f1',company:'Company Name',companyColor:'#1e1b4b',tagline:'Connecting the World',taglineColor:'#6366f1',website:'www.example.com',websiteColor:'#6b7280',qrBg:'#eef2ff',qrCell:'#6366f1' })
 }
 
 function buildVerticalCreative_Front(canvas, fabric) {

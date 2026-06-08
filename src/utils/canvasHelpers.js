@@ -87,8 +87,8 @@ function buildCorporateBlue_Front(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   canvas.add(P(fabric, 'M ' + (W*.58) + ' 0 Q ' + (W*.5) + ' ' + (H*.5) + ' ' + (W*.58) + ' ' + H + ' L ' + W + ' ' + H + ' L ' + W + ' 0 Z', { fill: '#4F46E5', opacity: 0.9, name: 'Accent Shape' }))
   canvas.add(P(fabric, 'M ' + (W*.63) + ' 0 Q ' + (W*.55) + ' ' + (H*.5) + ' ' + (W*.63) + ' ' + H + ' L ' + W + ' ' + H + ' L ' + W + ' 0 Z', { fill: '#6366f1', opacity: 0.4, name: 'Accent Layer 2' }))
-  canvas.add(IT(fabric, 'John Doe', { left: 48, top: 88, fontSize: 42, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Name' }))
-  canvas.add(IT(fabric, 'Chief Executive Officer', { left: 48, top: 146, fontSize: 15, fill: '#93c5fd', fontFamily: 'Arial, sans-serif', name: 'Title' }))
+  canvas.add(IT(fabric, 'Your Name', { left: 48, top: 88, fontSize: 42, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Name' }))
+  canvas.add(IT(fabric, 'Your Title', { left: 48, top: 146, fontSize: 15, fill: '#93c5fd', fontFamily: 'Arial, sans-serif', name: 'Title' }))
   canvas.add(L(fabric, [48, 183, 300, 183], { stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1, selectable: false, evented: false }))
   addContacts(canvas, fabric, 48, 200, 27, '#e0e7ff')
   logoCircle(canvas, fabric, W*.79, 128, 50, 'rgba(255,255,255,0.5)')
@@ -104,8 +104,8 @@ function buildCorporateBlack_Front(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   canvas.add(P(fabric, 'M 0 ' + (H*.72) + ' L ' + (W*.48) + ' 0 L ' + (W*.58) + ' 0 L ' + (W*.1) + ' ' + H + ' L 0 ' + H + ' Z', { fill: '#B8860B', opacity: 0.3, name: 'Gold Stripe' }))
   canvas.add(R(fabric, { left: 0, top: 0, width: 6, height: H, fill: '#FFD700', selectable: false, evented: false, name: 'Gold Bar' }))
-  canvas.add(IT(fabric, 'JOHN DOE', { left: 48, top: 75, fontSize: 42, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', charSpacing: 80, name: 'Name' }))
-  canvas.add(IT(fabric, 'Chief Executive Officer', { left: 50, top: 133, fontSize: 14, fill: '#FFD700', fontFamily: 'Arial, sans-serif', charSpacing: 40, name: 'Title' }))
+  canvas.add(IT(fabric, 'YOUR NAME', { left: 48, top: 75, fontSize: 42, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', charSpacing: 80, name: 'Name' }))
+  canvas.add(IT(fabric, 'Your Title', { left: 50, top: 133, fontSize: 14, fill: '#FFD700', fontFamily: 'Arial, sans-serif', charSpacing: 40, name: 'Title' }))
   canvas.add(L(fabric, [48, 166, 380, 166], { stroke: '#FFD700', strokeWidth: 1, opacity: 0.45, selectable: false, evented: false }))
   addContacts(canvas, fabric, 50, 180, 27, '#d1d5db', 0.7)
   logoCircle(canvas, fabric, W - 130, 120, 65, '#FFD700', 'rgba(255,215,0,0.06)')
@@ -127,8 +127,8 @@ function buildGreenProfessional_Front(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   canvas.add(R(fabric, { left: 0, top: H*.58, width: W, height: H*.42, fill: '#065f46', selectable: false, evented: false }))
   canvas.add(P(fabric, 'M ' + (W*.65) + ' -20 Q ' + (W*.9) + ' ' + (H*.3) + ' ' + (W*.7) + ' ' + (H*.6), { fill: 'transparent', stroke: '#10b981', strokeWidth: 28, opacity: 0.12, selectable: false, evented: false }))
-  canvas.add(IT(fabric, 'John Doe', { left: 48, top: 80, fontSize: 42, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Name' }))
-  canvas.add(IT(fabric, 'Chief Executive Officer', { left: 48, top: 136, fontSize: 14, fill: '#6ee7b7', fontFamily: 'Arial, sans-serif', name: 'Title' }))
+  canvas.add(IT(fabric, 'Your Name', { left: 48, top: 80, fontSize: 42, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Name' }))
+  canvas.add(IT(fabric, 'Your Title', { left: 48, top: 136, fontSize: 14, fill: '#6ee7b7', fontFamily: 'Arial, sans-serif', name: 'Title' }))
   canvas.add(L(fabric, [48, 168, 330, 168], { stroke: '#10b981', strokeWidth: 1.5, opacity: 0.5, selectable: false, evented: false }))
   addContacts(canvas, fabric, 48, 182, 27, '#d1fae5', 0.82)
   logoCircle(canvas, fabric, W - 120, 128, 55, '#6ee7b7')
@@ -145,8 +145,8 @@ function buildTechModern_Front(canvas, fabric) {
   canvas.add(R(fabric, { left: 0, top: 0, width: 5, height: H, fill: '#7c3aed', selectable: false, evented: false }))
   for (let col = 2; col <= 10; col++) for (let row = 1; row <= 7; row++)
     canvas.add(C(fabric, { left: col*80-2, top: row*70-2, radius: 1.5, fill: 'rgba(124,58,237,0.18)', selectable: false, evented: false }))
-  canvas.add(IT(fabric, 'John Doe', { left: 30, top: 72, fontSize: 40, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', name: 'Name' }))
-  canvas.add(IT(fabric, '< CEO & Founder />', { left: 32, top: 126, fontSize: 13, fill: '#a78bfa', fontFamily: 'Courier New, monospace', name: 'Title' }))
+  canvas.add(IT(fabric, 'Your Name', { left: 30, top: 72, fontSize: 40, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', name: 'Name' }))
+  canvas.add(IT(fabric, '< Your Title />', { left: 32, top: 126, fontSize: 13, fill: '#a78bfa', fontFamily: 'Courier New, monospace', name: 'Title' }))
   canvas.add(L(fabric, [30, 160, 320, 160], { stroke: '#7c3aed', strokeWidth: 1, opacity: 0.5, selectable: false, evented: false }))
   ;['+91 9876543210','john@databus.co','www.databus.co','123 Business St.'].forEach((txt, i) =>
     canvas.add(IT(fabric, txt, { left: 32, top: 174+i*27, fontSize: 12, fill: '#cbd5e1', fontFamily: 'Courier New, monospace', name: ['Phone','Email','Website','Address'][i] })))
@@ -163,7 +163,7 @@ function buildFloralCreative_Front(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   ;[[W-40,-40,100,'#f9a8d4',0.3],[W-10,30,70,'#ec4899',0.2],[W-120,-20,80,'#fce7f3',0.5],[-30,H-50,80,'#f9a8d4',0.2],[20,H+10,60,'#fbcfe8',0.3]]
     .forEach(([x,y,r,f,op]) => canvas.add(C(fabric, { left:x-r,top:y-r,radius:r,fill:f,opacity:op,selectable:false,evented:false })))
-  canvas.add(IT(fabric, 'Jane Doe', { left: 48, top: 80, fontSize: 40, fill: '#831843', fontFamily: 'Georgia, serif', fontWeight: 'bold', fontStyle: 'italic', name: 'Name' }))
+  canvas.add(IT(fabric, 'Your Name', { left: 48, top: 80, fontSize: 40, fill: '#831843', fontFamily: 'Georgia, serif', fontWeight: 'bold', fontStyle: 'italic', name: 'Name' }))
   canvas.add(IT(fabric, 'Creative Director', { left: 50, top: 133, fontSize: 14, fill: '#be185d', fontFamily: 'Georgia, serif', fontStyle: 'italic', name: 'Title' }))
   canvas.add(L(fabric, [48, 164, 300, 164], { stroke: '#f9a8d4', strokeWidth: 2, selectable: false, evented: false }))
   addContacts(canvas, fabric, 48, 178, 27, '#4b5563', 0.85)
@@ -188,8 +188,8 @@ function buildMinimalWhite_Front(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   canvas.add(R(fabric, { left:0,top:0,width:W,height:5,fill:'#4F46E5',selectable:false,evented:false }))
   canvas.add(R(fabric, { left:0,top:5,width:3,height:H-5,fill:'#4F46E5',opacity:0.12,selectable:false,evented:false }))
-  canvas.add(IT(fabric, 'John Doe', { left:48,top:70,fontSize:40,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',name:'Name' }))
-  canvas.add(IT(fabric, 'Chief Executive Officer', { left:50,top:124,fontSize:14,fill:'#4F46E5',fontFamily:'Arial, sans-serif',name:'Title' }))
+  canvas.add(IT(fabric, 'Your Name', { left:48,top:70,fontSize:40,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',name:'Name' }))
+  canvas.add(IT(fabric, 'Your Title', { left:50,top:124,fontSize:14,fill:'#4F46E5',fontFamily:'Arial, sans-serif',name:'Title' }))
   canvas.add(L(fabric, [48,155,320,155], { stroke:'#e5e7eb',strokeWidth:1.5,selectable:false,evented:false }))
   addContacts(canvas, fabric, 48, 170, 27, '#374151', 0.88)
   canvas.add(L(fabric, [W-200,46,W-200,H-46], { stroke:'#e5e7eb',strokeWidth:1,selectable:false,evented:false }))
@@ -217,8 +217,8 @@ function buildVerticalExecutive_Front(canvas, fabric) {
   setBg(canvas, '#0f172a')
   const W = canvas.width, H = canvas.height
   canvas.add(R(fabric, { left:0,top:0,width:W,height:8,fill:'#d4a017',selectable:false,evented:false }))
-  canvas.add(IT(fabric, 'JOHN DOE', { left:W/2,top:H*.1,fontSize:34,fill:'#fff',fontFamily:'Arial, sans-serif',fontWeight:'bold',charSpacing:80,originX:'center',name:'Name' }))
-  canvas.add(IT(fabric, 'Chief Executive Officer', { left:W/2,top:H*.19,fontSize:13,fill:'#d4a017',fontFamily:'Arial, sans-serif',charSpacing:30,originX:'center',name:'Title' }))
+  canvas.add(IT(fabric, 'YOUR NAME', { left:W/2,top:H*.1,fontSize:34,fill:'#fff',fontFamily:'Arial, sans-serif',fontWeight:'bold',charSpacing:80,originX:'center',name:'Name' }))
+  canvas.add(IT(fabric, 'Your Title', { left:W/2,top:H*.19,fontSize:13,fill:'#d4a017',fontFamily:'Arial, sans-serif',charSpacing:30,originX:'center',name:'Title' }))
   canvas.add(L(fabric, [48,H*.27,W-48,H*.27], { stroke:'rgba(212,160,23,0.4)',strokeWidth:1,selectable:false,evented:false }))
   ;['+91 9876543210','+91 9876543211','john@example.com','www.example.com'].forEach((txt, i) =>
     canvas.add(IT(fabric, txt, { left:W/2,top:H*.3+i*38,fontSize:13,fill:'#cbd5e1',fontFamily:'Arial, sans-serif',opacity:0.85,originX:'center',name:['Phone','Alt Phone','Email','Website'][i] })))
@@ -237,9 +237,9 @@ function buildVerticalMinimal_Front(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   canvas.add(R(fabric, { left:0,top:0,width:5,height:H,fill:'#6366f1',selectable:false,evented:false }))
   canvas.add(R(fabric, { left:0,top:H*.75,width:W,height:H*.25,fill:'#6366f1',selectable:false,evented:false }))
-  canvas.add(IT(fabric, 'John Doe', { left:28,top:H*.1,fontSize:38,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',name:'Name' }))
+  canvas.add(IT(fabric, 'Your Name', { left:28,top:H*.1,fontSize:38,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',name:'Name' }))
   canvas.add(L(fabric, [28,H*.19,W-28,H*.19], { stroke:'#e5e7eb',strokeWidth:1.5,selectable:false,evented:false }))
-  canvas.add(IT(fabric, 'Chief Executive Officer', { left:28,top:H*.22,fontSize:14,fill:'#6366f1',fontFamily:'Arial, sans-serif',name:'Title' }))
+  canvas.add(IT(fabric, 'Your Title', { left:28,top:H*.22,fontSize:14,fill:'#6366f1',fontFamily:'Arial, sans-serif',name:'Title' }))
   ;['Phone: +91 9876543210','Email: john@example.com','Web: www.example.com','Addr: 123 Business Street'].forEach((txt, i) =>
     canvas.add(IT(fabric, txt, { left:28,top:H*.3+i*44,fontSize:12,fill:'#374151',fontFamily:'Arial, sans-serif',opacity:0.85,name:['Phone','Email','Website','Address'][i] })))
   logoCircle(canvas, fabric, W/2, H*.63, 50, '#6366f1', '#eef2ff')
@@ -256,7 +256,7 @@ function buildVerticalCreative_Front(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   ;[[200,0.12,'#a855f7'],[140,0.18,'#7c3aed'],[90,0.28,'#a855f7'],[50,0.4,'#c084fc']].forEach(([r,op,col]) =>
     canvas.add(C(fabric, { left:W/2-r,top:H*.08-r,radius:r,fill:col,opacity:op,selectable:false,evented:false })))
-  canvas.add(IT(fabric, 'John Doe', { left:W/2,top:H*.37,fontSize:36,fill:'#fff',fontFamily:'Arial, sans-serif',fontWeight:'bold',originX:'center',name:'Name' }))
+  canvas.add(IT(fabric, 'Your Name', { left:W/2,top:H*.37,fontSize:36,fill:'#fff',fontFamily:'Arial, sans-serif',fontWeight:'bold',originX:'center',name:'Name' }))
   canvas.add(IT(fabric, 'Creative Technologist', { left:W/2,top:H*.44,fontSize:13,fill:'#c084fc',fontFamily:'Arial, sans-serif',charSpacing:30,originX:'center',name:'Title' }))
   canvas.add(L(fabric, [W/2-80,H*.51,W/2+80,H*.51], { stroke:'rgba(168,85,247,0.4)',strokeWidth:1,selectable:false,evented:false }))
   ;['+91 9876543210','john@creativeco.io','creativeco.io','@johncreative'].forEach((txt, i) =>
@@ -281,7 +281,7 @@ function buildVerticalBotanical_Front(canvas, fabric) {
   canvas.add(P(fabric, 'M ' + W + ' 0 Q ' + (W*.5) + ' ' + (H*.15) + ' ' + (W*.9) + ' ' + (H*.35), { fill:'transparent',stroke:'#4ade80',strokeWidth:22,opacity:0.1,selectable:false,evented:false }))
   ;[[W*.9,H*.05,80,0.12],[W*.15,H*.9,100,0.1]].forEach(([cx,cy,r,op]) =>
     canvas.add(C(fabric, { left:cx-r,top:cy-r,radius:r,fill:'#4ade80',opacity:op,selectable:false,evented:false })))
-  canvas.add(IT(fabric, 'Jane Doe', { left:W/2,top:H*.12,fontSize:36,fill:'#fff',fontFamily:'Georgia, serif',fontWeight:'bold',fontStyle:'italic',originX:'center',name:'Name' }))
+  canvas.add(IT(fabric, 'Your Name', { left:W/2,top:H*.12,fontSize:36,fill:'#fff',fontFamily:'Georgia, serif',fontWeight:'bold',fontStyle:'italic',originX:'center',name:'Name' }))
   canvas.add(IT(fabric, 'Sustainability Consultant', { left:W/2,top:H*.2,fontSize:13,fill:'#86efac',fontFamily:'Arial, sans-serif',originX:'center',name:'Title' }))
   canvas.add(L(fabric, [48,H*.27,W-48,H*.27], { stroke:'rgba(74,222,128,0.3)',strokeWidth:1,selectable:false,evented:false }))
   ;['+91 9876543210','jane@earthco.com','www.earthco.com','Nature Valley, Suite 4'].forEach((txt, i) =>
@@ -308,7 +308,7 @@ function buildMedical_Front(canvas, fabric) {
   canvas.add(R(fabric, { left:cx-cs/2,top:cy-ct/2,width:cs,height:ct,fill:'rgba(255,255,255,0.85)',rx:3,selectable:false,evented:false,name:'Cross H' }))
   canvas.add(IT(fabric, 'HealthCare', { left:W*.18,top:H*.22,fontSize:18,fill:'#fff',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Clinic Name' }))
   canvas.add(IT(fabric, 'Clinic & Hospital', { left:W*.18,top:H*.32,fontSize:10,fill:'rgba(255,255,255,0.8)',fontFamily:'Arial, sans-serif',originX:'center',name:'Clinic Sub' }))
-  canvas.add(IT(fabric, 'Dr. John Doe, MD', { left:W*.4,top:64,fontSize:32,fill:'#0c4a6e',fontFamily:'Georgia, serif',fontWeight:'bold',name:'Name' }))
+  canvas.add(IT(fabric, 'Dr. Your Name, MD', { left:W*.4,top:64,fontSize:32,fill:'#0c4a6e',fontFamily:'Georgia, serif',fontWeight:'bold',name:'Name' }))
   canvas.add(IT(fabric, 'Senior Cardiologist', { left:W*.4,top:108,fontSize:14,fill:'#0ea5e9',fontFamily:'Arial, sans-serif',name:'Title' }))
   canvas.add(L(fabric, [W*.4,135,W-40,135], { stroke:'#bae6fd',strokeWidth:1.5,selectable:false,evented:false }))
   ;['+91 9876543210','dr.john@healthcare.com','www.healthcare.com','123 Medical Plaza, City'].forEach((txt, i) =>

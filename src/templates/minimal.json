@@ -1,0 +1,9 @@
+{
+  "id": "minimal-white",
+  "name": "Minimal White",
+  "category": "Minimal",
+  "bgColor": "#ffffff",
+  "accentColor": "#4F46E5",
+  "textColor": "#1f2937",
+  "description": "Clean minimalist white design with subtle accents"
+}

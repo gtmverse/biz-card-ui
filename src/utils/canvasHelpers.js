@@ -92,11 +92,11 @@ function buildCorporateBlue_Front(canvas, fabric) {
   canvas.add(L(fabric, [48, 183, 300, 183], { stroke: 'rgba(255,255,255,0.2)', strokeWidth: 1, selectable: false, evented: false }))
   addContacts(canvas, fabric, 48, 200, 27, '#e0e7ff')
   logoCircle(canvas, fabric, W*.79, 128, 50, 'rgba(255,255,255,0.5)')
-  canvas.add(IT(fabric, 'DataBus Co.', { left: W*.79 - 55, top: 202, fontSize: 21, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Company' }))
+  canvas.add(IT(fabric, 'Company Name', { left: W*.79 - 55, top: 202, fontSize: 21, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Company' }))
   canvas.add(IT(fabric, 'Connecting the World', { left: W*.79 - 55, top: 232, fontSize: 11, fill: 'rgba(255,255,255,0.55)', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', name: 'Tagline' }))
 }
 function buildCorporateBlue_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg: '#1e3a5f', wave: '#4F46E5', logoStroke: 'rgba(255,255,255,0.4)', company: 'DataBus Co.', tagline: 'Connecting the World with Smarter Data', website: 'www.databus.co', qrBg: '#fff', qrCell: '#1e3a5f' })
+  stdBack(canvas, fabric, { bg: '#1e3a5f', wave: '#4F46E5', logoStroke: 'rgba(255,255,255,0.4)', company: 'Company Name', tagline: 'Connecting the World with Smarter Data', website: 'www.databus.co', qrBg: '#fff', qrCell: '#1e3a5f' })
 }
 
 function buildCorporateBlack_Front(canvas, fabric) {
@@ -109,7 +109,7 @@ function buildCorporateBlack_Front(canvas, fabric) {
   canvas.add(L(fabric, [48, 166, 380, 166], { stroke: '#FFD700', strokeWidth: 1, opacity: 0.45, selectable: false, evented: false }))
   addContacts(canvas, fabric, 50, 180, 27, '#d1d5db', 0.7)
   logoCircle(canvas, fabric, W - 130, 120, 65, '#FFD700', 'rgba(255,215,0,0.06)')
-  canvas.add(IT(fabric, 'DataBus Co.', { left: W - 190, top: 208, fontSize: 19, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Company' }))
+  canvas.add(IT(fabric, 'Company Name', { left: W - 190, top: 208, fontSize: 19, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Company' }))
   canvas.add(IT(fabric, 'Premium Data Solutions', { left: W - 186, top: 236, fontSize: 11, fill: '#FFD700', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', name: 'Tagline' }))
 }
 function buildCorporateBlack_Back(canvas, fabric) {
@@ -117,7 +117,7 @@ function buildCorporateBlack_Back(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   canvas.add(new fabric.Polygon([{x:W/2,y:40},{x:W-60,y:H/2},{x:W/2,y:H-40},{x:60,y:H/2}], { fill: 'transparent', stroke: '#FFD700', strokeWidth: 1.5, opacity: 0.3, name: 'Diamond Outline' }))
   logoCircle(canvas, fabric, W/2, H/2, 55, '#FFD700', 'rgba(255,215,0,0.06)')
-  canvas.add(IT(fabric, 'DATABUS CO.', { left: W/2, top: H/2+70, fontSize: 26, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', charSpacing: 60, originX: 'center', name: 'Company' }))
+  canvas.add(IT(fabric, 'COMPANY NAME', { left: W/2, top: H/2+70, fontSize: 26, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', charSpacing: 60, originX: 'center', name: 'Company' }))
   canvas.add(IT(fabric, 'Premium Data Solutions', { left: W/2, top: H/2+108, fontSize: 12, fill: '#FFD700', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', originX: 'center', name: 'Tagline' }))
   qrBox(canvas, fabric, W - 108, H - 108, '#1a1a1a', '#FFD700')
 }
@@ -132,11 +132,11 @@ function buildGreenProfessional_Front(canvas, fabric) {
   canvas.add(L(fabric, [48, 168, 330, 168], { stroke: '#10b981', strokeWidth: 1.5, opacity: 0.5, selectable: false, evented: false }))
   addContacts(canvas, fabric, 48, 182, 27, '#d1fae5', 0.82)
   logoCircle(canvas, fabric, W - 120, 128, 55, '#6ee7b7')
-  canvas.add(IT(fabric, 'DataBus Co.', { left: W - 188, top: 206, fontSize: 19, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Company' }))
+  canvas.add(IT(fabric, 'Company Name', { left: W - 188, top: 206, fontSize: 19, fill: '#fff', fontFamily: 'Georgia, serif', fontWeight: 'bold', name: 'Company' }))
   canvas.add(IT(fabric, 'Green Tech Solutions', { left: W - 168, top: 234, fontSize: 11, fill: '#6ee7b7', fontFamily: 'Arial, sans-serif', fontStyle: 'italic', name: 'Tagline' }))
 }
 function buildGreenProfessional_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg: '#022c22', wave: '#064e3b', logoStroke: '#10b981', company: 'DataBus Co.', tagline: 'Sustainable Data Solutions', website: 'www.databus.co', qrBg: '#064e3b', qrCell: '#10b981' })
+  stdBack(canvas, fabric, { bg: '#022c22', wave: '#064e3b', logoStroke: '#10b981', company: 'Company Name', tagline: 'Sustainable Data Solutions', website: 'www.databus.co', qrBg: '#064e3b', qrCell: '#10b981' })
 }
 
 function buildTechModern_Front(canvas, fabric) {
@@ -151,11 +151,11 @@ function buildTechModern_Front(canvas, fabric) {
   ;['+91 9876543210','john@databus.co','www.databus.co','123 Business St.'].forEach((txt, i) =>
     canvas.add(IT(fabric, txt, { left: 32, top: 174+i*27, fontSize: 12, fill: '#cbd5e1', fontFamily: 'Courier New, monospace', name: ['Phone','Email','Website','Address'][i] })))
   logoCircle(canvas, fabric, W - 115, 126, 58, '#a78bfa')
-  canvas.add(IT(fabric, 'DATABUS', { left: W-178, top: 212, fontSize: 17, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', charSpacing: 60, name: 'Company' }))
+  canvas.add(IT(fabric, 'COMPANY', { left: W-178, top: 212, fontSize: 17, fill: '#fff', fontFamily: 'Arial, sans-serif', fontWeight: 'bold', charSpacing: 60, name: 'Company' }))
   canvas.add(IT(fabric, '// next-gen analytics', { left: W-168, top: 238, fontSize: 10, fill: '#7c3aed', fontFamily: 'Courier New, monospace', name: 'Tagline' }))
 }
 function buildTechModern_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg: '#0f172a', wave: '#7c3aed', logoStroke: '#a78bfa', company: 'DATABUS', companyColor: '#fff', tagline: '// next-gen data platform', taglineColor: '#7c3aed', website: 'databus.co', websiteColor: '#94a3b8', qrBg: '#1e293b', qrCell: '#7c3aed' })
+  stdBack(canvas, fabric, { bg: '#0f172a', wave: '#7c3aed', logoStroke: '#a78bfa', company: 'COMPANY', companyColor: '#fff', tagline: '// next-gen data platform', taglineColor: '#7c3aed', website: 'databus.co', websiteColor: '#94a3b8', qrBg: '#1e293b', qrCell: '#7c3aed' })
 }
 
 function buildFloralCreative_Front(canvas, fabric) {
@@ -194,7 +194,7 @@ function buildMinimalWhite_Front(canvas, fabric) {
   addContacts(canvas, fabric, 48, 170, 27, '#374151', 0.88)
   canvas.add(L(fabric, [W-200,46,W-200,H-46], { stroke:'#e5e7eb',strokeWidth:1,selectable:false,evented:false }))
   logoCircle(canvas, fabric, W-140, 122, 60, '#4F46E5', '#eef2ff')
-  canvas.add(IT(fabric, 'DataBus Co.', { left:W-200,top:200,fontSize:18,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',name:'Company' }))
+  canvas.add(IT(fabric, 'Company Name', { left:W-200,top:200,fontSize:18,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',name:'Company' }))
   canvas.add(IT(fabric, 'Connecting the World', { left:W-192,top:228,fontSize:11,fill:'#6b7280',fontFamily:'Arial, sans-serif',fontStyle:'italic',name:'Tagline' }))
 }
 function buildMinimalWhite_Back(canvas, fabric) {
@@ -202,7 +202,7 @@ function buildMinimalWhite_Back(canvas, fabric) {
   const W = canvas.width, H = canvas.height
   canvas.add(R(fabric, { left:0,top:H*.62,width:W,height:H*.38,fill:'#4F46E5',selectable:false,evented:false }))
   logoCircle(canvas, fabric, W/2, 100, 65, '#4F46E5', '#eef2ff')
-  canvas.add(IT(fabric, 'DataBus Co.', { left:W/2,top:196,fontSize:32,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Company' }))
+  canvas.add(IT(fabric, 'Company Name', { left:W/2,top:196,fontSize:32,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Company' }))
   canvas.add(IT(fabric, 'Connecting the World', { left:W/2,top:240,fontSize:13,fill:'#6b7280',fontFamily:'Arial, sans-serif',fontStyle:'italic',originX:'center',name:'Tagline' }))
   canvas.add(IT(fabric, 'www.databus.co', { left:W/2,top:H*.62+28,fontSize:13,fill:'#fff',fontFamily:'Arial, sans-serif',originX:'center',name:'Website' }))
   canvas.add(IT(fabric, 'hello@databus.co  ·  +91 9876543210', { left:W/2,top:H*.62+54,fontSize:11,fill:'rgba(255,255,255,0.7)',fontFamily:'Arial, sans-serif',originX:'center',name:'Contact' }))
@@ -224,12 +224,12 @@ function buildVerticalExecutive_Front(canvas, fabric) {
     canvas.add(IT(fabric, txt, { left:W/2,top:H*.3+i*38,fontSize:13,fill:'#cbd5e1',fontFamily:'Arial, sans-serif',opacity:0.85,originX:'center',name:['Phone','Alt Phone','Email','Website'][i] })))
   canvas.add(L(fabric, [48,H*.68,W-48,H*.68], { stroke:'rgba(212,160,23,0.25)',strokeWidth:1,selectable:false,evented:false }))
   logoCircle(canvas, fabric, W/2, H*.77, 48, '#d4a017', 'rgba(212,160,23,0.08)')
-  canvas.add(IT(fabric, 'DataBus Co.', { left:W/2,top:H*.87,fontSize:20,fill:'#fff',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Company' }))
+  canvas.add(IT(fabric, 'Company Name', { left:W/2,top:H*.87,fontSize:20,fill:'#fff',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Company' }))
   canvas.add(IT(fabric, 'Connecting the World', { left:W/2,top:H*.92,fontSize:11,fill:'rgba(212,160,23,0.75)',fontFamily:'Arial, sans-serif',fontStyle:'italic',originX:'center',name:'Tagline' }))
   canvas.add(R(fabric, { left:0,top:H-8,width:W,height:8,fill:'#d4a017',selectable:false,evented:false }))
 }
 function buildVerticalExecutive_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg:'#0f172a',wave:'#d4a017',logoStroke:'#d4a017',company:'DataBus Co.',tagline:'Premium Data Solutions Worldwide',website:'www.databus.co',qrBg:'#1e293b',qrCell:'#d4a017' })
+  stdBack(canvas, fabric, { bg:'#0f172a',wave:'#d4a017',logoStroke:'#d4a017',company:'Company Name',tagline:'Premium Data Solutions Worldwide',website:'www.databus.co',qrBg:'#1e293b',qrCell:'#d4a017' })
 }
 
 function buildVerticalMinimal_Front(canvas, fabric) {
@@ -243,12 +243,12 @@ function buildVerticalMinimal_Front(canvas, fabric) {
   ;['Phone: +91 9876543210','Email: john@example.com','Web: www.example.com','Addr: 123 Business Street'].forEach((txt, i) =>
     canvas.add(IT(fabric, txt, { left:28,top:H*.3+i*44,fontSize:12,fill:'#374151',fontFamily:'Arial, sans-serif',opacity:0.85,name:['Phone','Email','Website','Address'][i] })))
   logoCircle(canvas, fabric, W/2, H*.63, 50, '#6366f1', '#eef2ff')
-  canvas.add(IT(fabric, 'DataBus Co.', { left:W/2,top:H*.73,fontSize:13,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Company' }))
+  canvas.add(IT(fabric, 'Company Name', { left:W/2,top:H*.73,fontSize:13,fill:'#1e1b4b',fontFamily:'Georgia, serif',fontWeight:'bold',originX:'center',name:'Company' }))
   canvas.add(IT(fabric, 'www.databus.co', { left:W/2,top:H*.78,fontSize:13,fill:'#fff',fontFamily:'Arial, sans-serif',originX:'center',name:'Website Block' }))
   canvas.add(IT(fabric, 'Connecting the World', { left:W/2,top:H*.84,fontSize:11,fill:'rgba(255,255,255,0.65)',fontFamily:'Arial, sans-serif',fontStyle:'italic',originX:'center',name:'Tagline Block' }))
 }
 function buildVerticalMinimal_Back(canvas, fabric) {
-  stdBack(canvas, fabric, { bg:'#ffffff',wave:'#6366f1',logoStroke:'#6366f1',company:'DataBus Co.',companyColor:'#1e1b4b',tagline:'Connecting the World',taglineColor:'#6366f1',website:'www.databus.co',websiteColor:'#6b7280',qrBg:'#eef2ff',qrCell:'#6366f1' })
+  stdBack(canvas, fabric, { bg:'#ffffff',wave:'#6366f1',logoStroke:'#6366f1',company:'Company Name',companyColor:'#1e1b4b',tagline:'Connecting the World',taglineColor:'#6366f1',website:'www.databus.co',websiteColor:'#6b7280',qrBg:'#eef2ff',qrCell:'#6366f1' })
 }
 
 function buildVerticalCreative_Front(canvas, fabric) {

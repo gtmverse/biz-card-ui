@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
 import {
   MousePointer2,
   Hand,
@@ -20,6 +20,7 @@ import {
   Eye,
   Save,
   Download,
+  ChevronDown,
   Ungroup,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -64,7 +65,9 @@ function ToolButton({ tool, active, onClick }) {
 }
 
 export default function Toolbar() {
-  const { activeTool, setActiveTool, canvas, undo, redo, previewMode, setPreviewMode } = useEditorStore()
+  const { activeTool, setActiveTool, canvas, undo, redo, previewMode, setPreviewMode, currentSide } = useEditorStore()
+  const [dlOpen, setDlOpen] = useState(false)
+  const dlRef = useRef(null)
 
   const handleDeleteSelected = () => {
     if (!canvas) return
@@ -96,8 +99,9 @@ export default function Toolbar() {
     if (!canvas) return
     const active = canvas.getActiveObjects()
     if (!active.length) return
-    const canvasW = canvas.width
-    const canvasH = canvas.height
+    // Use logical card dimensions from the store, not canvas.width/height which
+    // reflect the zoomed element size at auto-fit zoom levels
+    const { cardWidth: canvasW, cardHeight: canvasH } = useEditorStore.getState()
     active.forEach((obj) => {
       const w = obj.getScaledWidth()
       const h = obj.getScaledHeight()
@@ -292,14 +296,45 @@ export default function Toolbar() {
           <Save size={14} />
           Save
         </Button>
-        <Button
-          size="sm"
-          className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700"
-          onClick={() => downloadCanvas(canvas, 'png')}
-        >
-          <Download size={14} />
-          Download
-        </Button>
+        <div className="relative" ref={dlRef}>
+          <div className="flex rounded-lg overflow-hidden">
+            <Button
+              size="sm"
+              className="h-8 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 rounded-r-none border-r border-indigo-500 pr-3"
+              onClick={() => downloadCanvas(canvas, 'png')}
+            >
+              <Download size={14} />
+              Download {currentSide === 'back' ? 'Back' : 'Front'}
+            </Button>
+            <button
+              className="h-8 px-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-r-lg border-l border-indigo-500 transition-colors"
+              onClick={() => setDlOpen((v) => !v)}
+            >
+              <ChevronDown size={13} />
+            </button>
+          </div>
+          {dlOpen && (
+            <div
+              className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50 min-w-[160px]"
+              onBlur={() => setDlOpen(false)}
+            >
+              {[
+                ['PNG', 'png'],
+                ['JPEG', 'jpg'],
+                ['SVG', 'svg'],
+                ['PDF', 'pdf'],
+              ].map(([label, fmt]) => (
+                <button
+                  key={fmt}
+                  className="w-full text-left px-4 py-1.5 text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 font-medium"
+                  onClick={() => { downloadCanvas(canvas, fmt); setDlOpen(false) }}
+                >
+                  Download as {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

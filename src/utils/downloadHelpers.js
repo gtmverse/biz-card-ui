@@ -1,38 +1,23 @@
-const CARD_W = 900
-const CARD_H = 540
-const EXPORT_MULTIPLIER = 2 // 1800×1080 output
+import useEditorStore from '@/store/editorStore'
 
-/**
- * Prepare canvas for export:
- *  - exit any active text-editing mode (IText textarea overlay)
- *  - deselect all objects (no selection handles in export)
- *  - reset viewport to 1:1 so the full card is captured regardless of zoom
- * Returns a restore function that puts the canvas back to its previous state.
- */
+const EXPORT_MULTIPLIER = 2
+
 function prepareForExport(canvas) {
-  // 1. Exit text editing if active
   const active = canvas.getActiveObject()
-  if (active && active.isEditing) {
-    active.exitEditing()
-  }
-
-  // 2. Clear selection (hides blue handles / border in the image)
+  if (active && active.isEditing) active.exitEditing()
   canvas.discardActiveObject()
 
-  // 3. Save current viewport state
-  const savedVp     = [...canvas.viewportTransform]
+  const savedVp    = [...canvas.viewportTransform]
   const savedWidth  = canvas.width
   const savedHeight = canvas.height
 
-  // 4. Reset to real card dimensions so zoom level has no effect on the export
+  // Use actual card design dimensions (handles vertical cards correctly)
+  const { cardWidth, cardHeight } = useEditorStore.getState()
   canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
-  canvas.setWidth(CARD_W)
-  canvas.setHeight(CARD_H)
-
-  // 5. Force a synchronous render with the new viewport
+  canvas.setWidth(cardWidth)
+  canvas.setHeight(cardHeight)
   canvas.renderAll()
 
-  // Return a restore callback
   return () => {
     canvas.setViewportTransform(savedVp)
     canvas.setWidth(savedWidth)
@@ -70,16 +55,20 @@ export function downloadCanvas(canvas, format = 'png') {
       }
 
       case 'pdf': {
-        // Capture the image synchronously while viewport is reset, then restore before async work
+        // Capture image synchronously while viewport is reset, then restore before async jsPDF work
+        const { cardWidth, cardHeight } = useEditorStore.getState()
+        const isVertical = cardHeight > cardWidth
+        // Standard business card: 90×54 mm landscape, or 54×90 mm portrait
+        const [pdfW, pdfH] = isVertical ? [54, 90] : [90, 54]
         const imgData = canvas.toDataURL({ format: 'png', multiplier: EXPORT_MULTIPLIER })
         restore()
         import('jspdf').then(({ jsPDF }) => {
           const pdf = new jsPDF({
-            orientation: 'landscape',
+            orientation: isVertical ? 'portrait' : 'landscape',
             unit: 'mm',
-            format: [90, 54],
+            format: [pdfW, pdfH],
           })
-          pdf.addImage(imgData, 'PNG', 0, 0, 90, 54)
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH)
           pdf.save('bizcard.pdf')
         })
         return // skip the finally-restore since we already restored above

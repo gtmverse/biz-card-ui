@@ -17,6 +17,18 @@ const useEditorStore = create((set, get) => ({
   selectedTemplate: 'corporate-blue',
   setSelectedTemplate: (id) => set({ selectedTemplate: id }),
 
+  // ─── Card side (front / back) ───────────────────────────────────────────
+  currentSide: 'front',
+  setCurrentSide: (side) => set({ currentSide: side }),
+
+  // Serialized Fabric JSON for each side; null = not yet edited / use default
+  frontJSON: null,
+  backJSON: null,
+  setFrontJSON: (json) => set({ frontJSON: json }),
+  setBackJSON:  (json) => set({ backJSON:  json }),
+  // Called when the user picks a new template — discard stale per-side edits
+  resetSideJSON: () => set({ frontJSON: null, backJSON: null }),
+
   // Selected objects on canvas
   selectedObjects: [],
   setSelectedObjects: (objects) => set({ selectedObjects: objects }),
@@ -34,14 +46,13 @@ const useEditorStore = create((set, get) => ({
   setActivePropertiesTab: (tab) => set({ activePropertiesTab: tab }),
 
   // Canvas background color
-  canvasBg: '#ffffff',
+  canvasBg: '#1e3a5f',
   setCanvasBg: (color) => {
     set({ canvasBg: color })
     const { canvas } = get()
-    if (canvas) {
-      canvas.setBackgroundColor(color, () => canvas.renderAll())
-    }
+    if (canvas) canvas.setBackgroundColor(color, () => canvas.renderAll())
   },
+  setCanvasBgSilent: (color) => set({ canvasBg: color }),
 
   // Template filter
   templateFilter: 'all',
@@ -64,22 +75,21 @@ const useEditorStore = create((set, get) => ({
     const { canvas, history, historyIndex } = get()
     if (historyIndex <= 0 || !canvas) return
     const newIndex = historyIndex - 1
-    const state = history[newIndex]
-    canvas.loadFromJSON(state, () => canvas.renderAll())
+    canvas.loadFromJSON(history[newIndex], () => canvas.renderAll())
     set({ historyIndex: newIndex })
   },
   redo: () => {
     const { canvas, history, historyIndex } = get()
     if (historyIndex >= history.length - 1 || !canvas) return
     const newIndex = historyIndex + 1
-    const state = history[newIndex]
-    canvas.loadFromJSON(state, () => canvas.renderAll())
+    canvas.loadFromJSON(history[newIndex], () => canvas.renderAll())
     set({ historyIndex: newIndex })
   },
 
-  // Card dimensions
+  // Card dimensions (updated when template orientation changes)
   cardWidth: 900,
   cardHeight: 540,
+  setCardDimensions: (w, h) => set({ cardWidth: w, cardHeight: h }),
 
   // Selected object properties
   selectedObjectProps: null,

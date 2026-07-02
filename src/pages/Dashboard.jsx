@@ -12,8 +12,10 @@ import BackgroundPanel from '@/components/TemplatePanel/BackgroundPanel'
 import QRCodePanel from '@/components/TemplatePanel/QRCodePanel'
 import LayersSidePanel from '@/components/TemplatePanel/LayersSidePanel'
 import BrandKitPanel from '@/components/TemplatePanel/BrandKitPanel'
+import SettingsPanel from '@/components/TemplatePanel/SettingsPanel'
 import useEditorStore from '@/store/editorStore'
-import { PanelRightOpen, X } from 'lucide-react'
+import { PanelRightOpen, X, Plus, Type, Image as ImageIcon, Shapes, LayoutGrid } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 const PANELS = {
   templates:  TemplatePanel,
@@ -24,12 +26,16 @@ const PANELS = {
   qrcode:     QRCodePanel,
   layers:     LayersSidePanel,
   brand:      BrandKitPanel,
+  settings:   SettingsPanel,
 }
 
 function PreviewOverlay() {
   const { canvas, setPreviewMode } = useEditorStore()
-  const [dataUrl, setDataUrl] = React.useState('')
+  const [frontUrl, setFrontUrl]     = React.useState('')
+  const [backUrl,  setBackUrl]      = React.useState('')
   const [isVertical, setIsVertical] = React.useState(false)
+  const [flipped, setFlipped]       = React.useState(false)
+  const [isFlipping, setIsFlipping] = React.useState(false)
 
   React.useEffect(() => {
     if (!canvas) return
@@ -38,86 +44,260 @@ function PreviewOverlay() {
     const active = canvas.getActiveObject()
     if (active?.isEditing) active.exitEditing()
     canvas.discardActiveObject()
+    canvas.renderAll()
 
-    // Save current viewport + element size
-    const savedVp = [...canvas.viewportTransform]
-    const savedW  = canvas.width
-    const savedH  = canvas.height
-
-    // Capture at actual card dimensions (ignore zoom)
-    const { cardWidth, cardHeight } = useEditorStore.getState()
+    const store = useEditorStore.getState()
+    const { cardWidth, cardHeight, selectedTemplate, currentSide, frontJSON, backJSON } = store
     setIsVertical(cardHeight > cardWidth)
-    canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
-    canvas.setWidth(cardWidth)
-    canvas.setHeight(cardHeight)
-    canvas.renderAll()
 
-    setDataUrl(canvas.toDataURL({ format: 'png', multiplier: 2 }))
+    const runCapture = async () => {
+      const { buildCard } = await import('../utils/canvasHelpers')
+      const { fabric }    = await import('fabric')
 
-    // Restore working zoom + size
-    canvas.setViewportTransform(savedVp)
-    canvas.setWidth(savedW)
-    canvas.setHeight(savedH)
-    canvas.renderAll()
+      // ── Helper: build an off-screen canvas from saved JSON ─────────────────
+      const captureFromJSON = (json) => {
+        return new Promise((resolve) => {
+          const el = document.createElement('canvas')
+          el.width  = cardWidth
+          el.height = cardHeight
+          const tmp = new fabric.Canvas(el, {
+            width: cardWidth,
+            height: cardHeight,
+            enableRetinaScaling: false,
+          })
+          tmp.loadFromJSON(json, () => {
+            tmp.renderAll()
+            const url = tmp.toDataURL({ format: 'png', multiplier: 2 })
+            tmp.dispose()
+            resolve(url)
+          })
+        })
+      }
+
+      // ── Helper: build an off-screen canvas from the default template ────────
+      const captureFromTemplate = (sideName) => {
+        return new Promise((resolve) => {
+          const el = document.createElement('canvas')
+          el.width  = cardWidth
+          el.height = cardHeight
+          const tmp = new fabric.Canvas(el, {
+            width: cardWidth,
+            height: cardHeight,
+            enableRetinaScaling: false,
+          })
+          buildCard(tmp, fabric, selectedTemplate, sideName)
+          // Wait a short delay for any async image loads (logo circles etc.) to settle
+          setTimeout(() => {
+            tmp.renderAll()
+            const url = tmp.toDataURL({ format: 'png', multiplier: 2 })
+            tmp.dispose()
+            resolve(url)
+          }, 150)
+        })
+      }
+
+      // ── Capture the CURRENT (live) side directly from the main canvas ───────
+      // Temporarily reset zoom so we capture at 1:1 (full card resolution)
+      const { zoom } = useEditorStore.getState()
+      const scale = zoom / 100
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+      canvas.setWidth(cardWidth)
+      canvas.setHeight(cardHeight)
+      canvas.renderAll()
+      const liveUrl = canvas.toDataURL({ format: 'png', multiplier: 2 })
+      // Restore zoom
+      canvas.setViewportTransform([scale, 0, 0, scale, 0, 0])
+      canvas.setWidth(cardWidth  * scale)
+      canvas.setHeight(cardHeight * scale)
+      canvas.renderAll()
+
+      // ── Capture the OTHER side ─────────────────────────────────────────────
+      if (currentSide === 'front') {
+        setFrontUrl(liveUrl)
+        const bUrl = backJSON
+          ? await captureFromJSON(backJSON)
+          : await captureFromTemplate('back')
+        setBackUrl(bUrl)
+      } else {
+        setBackUrl(liveUrl)
+        const fUrl = frontJSON
+          ? await captureFromJSON(frontJSON)
+          : await captureFromTemplate('front')
+        setFrontUrl(fUrl)
+      }
+    }
+
+    runCapture()
   }, [canvas])
 
-  const sizeLabel = isVertical ? '2" × 3.5"  (Portrait)' : '3.5" × 2"  (Landscape)'
+  const handleFlip = (toBack) => {
+    if (isFlipping) return
+    if (toBack === flipped) return
+    setIsFlipping(true)
+    setFlipped(toBack)
+    setTimeout(() => setIsFlipping(false), 650)
+  }
+
+  const sizeLabel = isVertical ? '2" × 3.5" (Portrait)' : '3.5" × 2" (Landscape)'
+
+  // Card dimensions for preview (max-constrained)
+  const cardAspect = isVertical ? (540 / 900) : (900 / 540)
+  const cardMaxH   = isVertical ? 480 : 320
+  const cardMaxW   = cardMaxH * cardAspect
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
-      <div className={`relative mx-8 ${isVertical ? 'max-w-sm' : 'max-w-4xl w-full'}`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
+      onClick={() => setPreviewMode(false)}
+    >
+      <div
+        className="relative flex flex-col items-center gap-6"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Close */}
         <button
           onClick={() => setPreviewMode(false)}
-          className="absolute -top-12 right-0 text-white/70 hover:text-white flex items-center gap-2 text-sm"
+          className="absolute -top-14 right-0 text-white/60 hover:text-white flex items-center gap-2 text-sm transition-colors"
         >
           <X size={18} />
           Close Preview
         </button>
-        <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl">
-          <p className="text-white/50 text-xs text-center mb-4 uppercase tracking-widest">Preview</p>
-          {dataUrl && (
-            <img src={dataUrl} alt="Card Preview" className="w-full rounded-xl shadow-xl" />
-          )}
-          <p className="text-white/30 text-xs text-center mt-4">Business Card · {sizeLabel}</p>
+
+        {/* Header */}
+        <p className="text-white/40 text-[10px] uppercase tracking-[0.25em]">Preview</p>
+
+        {/* 3D Card Stage */}
+        <div
+          style={{
+            perspective: '1200px',
+            width: cardMaxW,
+            height: cardMaxH,
+          }}
+          className="cursor-pointer"
+          onClick={() => handleFlip(!flipped)}
+        >
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              position: 'relative',
+              transformStyle: 'preserve-3d',
+              transition: 'transform 0.65s cubic-bezier(0.45, 0.05, 0.55, 0.95)',
+              transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            }}
+          >
+            {/* FRONT face */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              borderRadius: 12,
+              overflow: 'hidden',
+              boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+            }}>
+              {frontUrl
+                ? <img src={frontUrl} alt="Front" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', height: '100%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.2)', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
+                  </div>
+              }
+            </div>
+
+            {/* BACK face */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              backfaceVisibility: 'hidden',
+              WebkitBackfaceVisibility: 'hidden',
+              transform: 'rotateY(180deg)',
+              borderRadius: 12,
+              overflow: 'hidden',
+              boxShadow: '0 30px 60px rgba(0,0,0,0.5)',
+            }}>
+              {backUrl
+                ? <img src={backUrl} alt="Back" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                : <div style={{ width: '100%', height: '100%', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 32, height: 32, border: '3px solid rgba(255,255,255,0.2)', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
+                  </div>
+              }
+            </div>
+          </div>
         </div>
+
+        {/* Ambient glow under card */}
+        <div style={{
+          position: 'absolute',
+          bottom: 80,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: cardMaxW * 0.7,
+          height: 40,
+          background: 'radial-gradient(ellipse, rgba(99,102,241,0.35) 0%, transparent 70%)',
+          filter: 'blur(12px)',
+          pointerEvents: 'none',
+          transition: 'opacity 0.4s',
+          opacity: isFlipping ? 0.2 : 1,
+        }} />
+
+        {/* Front / Back Toggle Buttons */}
+        <div className="flex items-center gap-1 bg-white/10 rounded-full p-1 backdrop-blur-sm border border-white/10">
+          <button
+            onClick={() => handleFlip(false)}
+            style={{
+              padding: '7px 24px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              transition: 'all 0.3s',
+              background: !flipped ? 'white' : 'transparent',
+              color: !flipped ? '#1e293b' : 'rgba(255,255,255,0.55)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            FRONT
+          </button>
+          <button
+            onClick={() => handleFlip(true)}
+            style={{
+              padding: '7px 24px',
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 600,
+              letterSpacing: '0.05em',
+              transition: 'all 0.3s',
+              background: flipped ? 'white' : 'transparent',
+              color: flipped ? '#1e293b' : 'rgba(255,255,255,0.55)',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            BACK
+          </button>
+        </div>
+
+        {/* Hint */}
+        <p className="text-white/25 text-[10px] text-center" style={{ marginTop: -10 }}>
+          Click card to flip · Business Card · {sizeLabel}
+        </p>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
+
 
 export default function Dashboard() {
   const { activeSidebarItem, previewMode } = useEditorStore()
   const PanelComponent = PANELS[activeSidebarItem] || TemplatePanel
 
   const [rightPanelOpen, setRightPanelOpen] = React.useState(true)
+  const [fabOpen, setFabOpen] = React.useState(false)
 
   return (
     <TooltipProvider>
-      <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
-        {/* Top Brand Bar */}
-        <div
-          className="flex items-center justify-between px-4 py-2 border-b border-gray-100"
-          style={{ background: '#0050B8', minHeight: 46 }}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-bold text-xs"
-              style={{ background: 'rgba(255,255,255,0.2)' }}
-            >
-              BC
-            </div>
-            <span className="text-white font-semibold text-sm tracking-wide">BizCard Studio</span>
-            <span className="text-white/30 text-xs">·</span>
-            <span className="text-white/50 text-xs">Untitled Design</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-white/60 text-xs">Auto-saved</span>
-            </div>
-          </div>
-        </div>
-
+      <div className="h-full flex flex-col overflow-hidden bg-gray-50">
         {/* Main Layout */}
         <div className="flex flex-1 overflow-hidden">
           {/* Left Sidebar */}
@@ -126,10 +306,38 @@ export default function Dashboard() {
           {/* Left Panel (templates, uploads, etc.) */}
           <PanelComponent />
 
-          {/* Center: Toolbar + Canvas */}
+          {/* Center: Canvas */}
           <div className="flex flex-col flex-1 overflow-hidden relative">
-            <Toolbar />
             <Canvas />
+            
+            {/* Floating Action Button (FAB) */}
+            <div className="absolute bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+              {fabOpen && (
+                <div className="flex flex-col gap-2 animate-fade-in">
+                  <button className="w-12 h-12 rounded-full bg-white text-slate-700 shadow-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-colors">
+                    <Type size={18} />
+                  </button>
+                  <button className="w-12 h-12 rounded-full bg-white text-slate-700 shadow-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-colors">
+                    <ImageIcon size={18} />
+                  </button>
+                  <button className="w-12 h-12 rounded-full bg-white text-slate-700 shadow-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-colors">
+                    <Shapes size={18} />
+                  </button>
+                  <button className="w-12 h-12 rounded-full bg-white text-slate-700 shadow-xl border border-slate-100 flex items-center justify-center hover:bg-slate-50 transition-colors">
+                    <LayoutGrid size={18} />
+                  </button>
+                </div>
+              )}
+              <button 
+                onClick={() => setFabOpen(!fabOpen)}
+                className={cn(
+                  "w-14 h-14 rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-300",
+                  fabOpen ? "bg-slate-800 rotate-45 shadow-[0_8px_30px_rgba(0,0,0,0.3)]" : "btn-primary-gradient"
+                )}
+              >
+                <Plus size={24} />
+              </button>
+            </div>
           </div>
 
           {/* Right Properties Panel or collapsed strip */}

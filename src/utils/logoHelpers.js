@@ -1,3 +1,5 @@
+import useEditorStore from '@/store/editorStore'
+
 export const LOGO_CIRCLE_NAMES = new Set(['Logo Circle', 'Logo Placeholder', 'Logo Ring'])
 const LOGO_LABEL_NAMES  = new Set(['Logo', 'Logo Label'])
 
@@ -34,6 +36,9 @@ export async function replaceLogoWithFile(canvas, file) {
 
   const reader = new FileReader()
   reader.onload = (ev) => {
+    const dataUrl = ev.target.result
+    useEditorStore.getState().setCustomLogoSrc(dataUrl)
+
     const el = new window.Image()
     el.onload = () => {
       // Scale so the shorter side fills the circle's diameter
@@ -51,8 +56,9 @@ export async function replaceLogoWithFile(canvas, file) {
           radius: radius,
           originX: 'center',
           originY: 'center',
-          left: 0,
-          top: 0,
+          left: cx,
+          top: cy,
+          absolutePositioned: true,
         }),
       })
 

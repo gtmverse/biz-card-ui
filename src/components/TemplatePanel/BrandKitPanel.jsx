@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import useEditorStore from '@/store/editorStore'
+import useEditorStore, { PERSONA_PRESETS } from '@/store/editorStore'
 
 const defaultBrandColors = ['#4F46E5', '#7C3AED', '#1e3a5f', '#ffffff', '#1a1a1a']
 const defaultFonts = ['Georgia', 'Arial', 'Helvetica', 'Verdana']
 
 export default function BrandKitPanel() {
-  const { canvas } = useEditorStore()
+  const { canvas, profileDetails, setProfileDetails } = useEditorStore()
   const [brandColors, setBrandColors] = useState(defaultBrandColors)
   const [brandFonts] = useState(defaultFonts)
   const [newColor, setNewColor] = useState('#4F46E5')
@@ -45,10 +45,41 @@ export default function BrandKitPanel() {
     <div className="flex flex-col h-full bg-white border-r border-gray-100" style={{ width: 300, minWidth: 300 }}>
       <div className="p-4 border-b border-gray-100">
         <h2 className="text-base font-semibold text-gray-900">Brand Kit</h2>
-        <p className="text-xs text-gray-400 mt-1">Your brand colors and fonts</p>
+        <p className="text-xs text-gray-400 mt-1">Classy profiles, colors and typography</p>
       </div>
 
       <div className="p-4 overflow-auto flex-1 space-y-6">
+        {/* Classy Persona Presets */}
+        <div>
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold mb-3">Classy Profiles</p>
+          <div className="space-y-2">
+            {PERSONA_PRESETS.map((preset) => {
+              const isSelected = profileDetails.name === preset.name
+              return (
+                <button
+                  key={preset.name}
+                  onClick={() => setProfileDetails(preset)}
+                  className={`w-full text-left px-3 py-2 rounded-xl border transition-all flex items-center gap-3 ${
+                    isSelected
+                      ? 'bg-indigo-50/70 border-indigo-200 text-indigo-700 shadow-sm'
+                      : 'bg-white border-slate-100 hover:border-slate-200 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  <img
+                    src={preset.avatarSrc}
+                    alt={preset.name}
+                    className="w-8 h-8 rounded-full border border-slate-200 object-cover shrink-0"
+                  />
+                  <div className="truncate flex-1">
+                    <span className="block text-xs font-bold leading-tight">{preset.name}</span>
+                    <span className="text-[9px] text-slate-400 font-semibold leading-none">{preset.title} · <span className="italic">{preset.company}</span></span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         {/* Brand Colors */}
         <div>
           <p className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold mb-3">Brand Colors</p>

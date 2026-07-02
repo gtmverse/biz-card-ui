@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import useEditorStore from '@/store/editorStore'
 import { downloadCanvas } from '@/utils/downloadHelpers'
 import { isLogoCircle, replaceLogoWithFile } from '@/utils/logoHelpers'
+import { isAvatarCircle, replaceAvatarWithFile } from '@/utils/avatarHelpers'
 import {
   AlignLeft,
   AlignCenter,
@@ -85,6 +86,46 @@ function LogoSection({ canvas }) {
   )
 }
 
+// ─── Avatar Replacement ──────────────────────────────────────────────────────
+
+function AvatarSection({ canvas }) {
+  const avatarInputRef = useRef(null)
+  const [replacing, setReplacing] = useState(false)
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setReplacing(true)
+    await replaceAvatarWithFile(canvas, file)
+    setReplacing(false)
+    e.target.value = ''
+  }
+
+  return (
+    <div>
+      <SectionTitle>Profile Photo</SectionTitle>
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+        className="hidden"
+        onChange={handleFile}
+      />
+      <button
+        disabled={replacing}
+        onClick={() => avatarInputRef.current?.click()}
+        className="w-full h-10 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/50 text-indigo-600 hover:bg-indigo-100 hover:border-indigo-400 text-xs font-semibold transition-all disabled:opacity-60"
+      >
+        <UploadCloud size={14} />
+        {replacing ? 'Replacing…' : 'Replace Avatar with Photo'}
+      </button>
+      <p className="text-[10px] text-gray-400 mt-1.5 text-center">
+        PNG, JPG, SVG, WebP accepted · image will be cropped to circle
+      </p>
+    </div>
+  )
+}
+
 // ─── Design tab ───────────────────────────────────────────────────────────────
 
 function DesignTab() {
@@ -107,13 +148,43 @@ function DesignTab() {
     const active = canvas.getActiveObjects()
     active.forEach((obj) => obj.set(prop, value))
     canvas.renderAll()
+    
+    const store = useEditorStore.getState()
+    if (store.selectedObjectProps) {
+      store.setSelectedObjectProps({
+        ...store.selectedObjectProps,
+        [prop]: value
+      })
+    }
   }
 
   const selectedObj = canvas?.getActiveObject()
   const showLogoSection = selectedObjectProps?.type === 'circle' && isLogoCircle(selectedObj)
+  const showAvatarSection = selectedObj && isAvatarCircle(selectedObj)
+
+  if (!selectedObjectProps) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center p-6">
+        <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4 shadow-inner">
+          <span className="text-2xl">✨</span>
+        </div>
+        <h3 className="text-[13px] font-bold text-slate-700 mb-1">Nothing Selected</h3>
+        <p className="text-[11px] text-slate-500 max-w-[200px]">Click any layer on the canvas to customize its properties.</p>
+        
+        <div className="w-full mt-10">
+          <SectionTitle>Canvas Background</SectionTitle>
+          <div className="flex flex-wrap gap-1.5 justify-center mb-3">
+            {bgPresets.map((c) => (
+              <ColorSwatch key={c} color={c} onClick={setCanvasBg} active={canvasBg === c} />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-5 p-4">
+    <div className="space-y-5 p-4 animate-fade-in">
 
       {/* ── Logo replacement (shown only when a logo circle is selected) ── */}
       {showLogoSection && (
@@ -123,30 +194,13 @@ function DesignTab() {
         </>
       )}
 
-      {/* Background */}
-      <div>
-        <SectionTitle>Canvas Background</SectionTitle>
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {bgPresets.map((c) => (
-            <ColorSwatch key={c} color={c} onClick={setCanvasBg} active={canvasBg === c} />
-          ))}
-        </div>
-        <div className="flex items-center gap-2 mt-2">
-          <input
-            type="color"
-            value={canvasBg}
-            onChange={(e) => setCanvasBg(e.target.value)}
-            className="w-8 h-8 rounded cursor-pointer border border-gray-200"
-          />
-          <Input
-            value={canvasBg}
-            onChange={(e) => setCanvasBg(e.target.value)}
-            className="flex-1 h-8 text-xs font-mono"
-          />
-        </div>
-      </div>
-
-      <Separator />
+      {/* ── Avatar replacement (shown only when an avatar layer is selected) ── */}
+      {showAvatarSection && (
+        <>
+          <AvatarSection canvas={canvas} />
+          <Separator />
+        </>
+      )}
 
       {/* Selected object properties */}
       {selectedObjectProps ? (
@@ -209,13 +263,13 @@ function DesignTab() {
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                defaultValue={selectedObjectProps.fill || '#000000'}
+                value={selectedObjectProps.fill && selectedObjectProps.fill.startsWith('#') ? selectedObjectProps.fill : '#ffffff'}
                 onChange={(e) => updateSelectedProp('fill', e.target.value)}
-                className="w-8 h-8 rounded cursor-pointer border border-gray-200"
+                className="w-8 h-8 rounded cursor-pointer border border-slate-200"
               />
               <Input
-                defaultValue={selectedObjectProps.fill || ''}
-                className="flex-1 h-8 text-xs font-mono"
+                value={selectedObjectProps.fill || ''}
+                className="flex-1 h-8 text-xs font-mono border-slate-200"
                 placeholder="transparent"
                 onChange={(e) => updateSelectedProp('fill', e.target.value)}
               />
@@ -236,16 +290,16 @@ function DesignTab() {
                 <SectionTitle>Image</SectionTitle>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-[10px] text-gray-500">Width</Label>
-                    <Input type="number" defaultValue={selectedObjectProps.width} className="h-8 text-xs mt-0.5" readOnly />
+                    <Label className="text-[10px] text-slate-500 font-semibold">Width</Label>
+                    <Input type="number" value={selectedObjectProps.width || 0} className="h-8 text-xs mt-0.5 border-slate-200" readOnly />
                   </div>
                   <div>
-                    <Label className="text-[10px] text-gray-500">Height</Label>
-                    <Input type="number" defaultValue={selectedObjectProps.height} className="h-8 text-xs mt-0.5" readOnly />
+                    <Label className="text-[10px] text-slate-500 font-semibold">Height</Label>
+                    <Input type="number" value={selectedObjectProps.height || 0} className="h-8 text-xs mt-0.5 border-slate-200" readOnly />
                   </div>
                 </div>
                 <button
-                  className="mt-2 w-full h-8 text-xs border border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+                  className="mt-2 w-full h-8 text-xs border border-dashed border-slate-200 rounded-lg text-slate-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
                   onClick={() => { const obj = canvas.getActiveObject(); if (obj) { obj.set({ clipPath: undefined }); canvas.renderAll() } }}
                 >
                   Reset Clip
@@ -261,14 +315,14 @@ function DesignTab() {
             <div className="flex items-center gap-2">
               <input
                 type="color"
-                defaultValue={selectedObjectProps.stroke || '#000000'}
+                value={selectedObjectProps.stroke && selectedObjectProps.stroke.startsWith('#') ? selectedObjectProps.stroke : '#000000'}
                 onChange={(e) => updateSelectedProp('stroke', e.target.value)}
-                className="w-8 h-8 rounded cursor-pointer border border-gray-200"
+                className="w-8 h-8 rounded cursor-pointer border border-slate-200"
               />
               <Input
                 type="number"
-                defaultValue={selectedObjectProps.strokeWidth || 0}
-                className="flex-1 h-8 text-xs"
+                value={selectedObjectProps.strokeWidth || 0}
+                className="flex-1 h-8 text-xs border-slate-200"
                 placeholder="Width"
                 onChange={(e) => updateSelectedProp('strokeWidth', Number(e.target.value))}
               />
@@ -282,12 +336,12 @@ function DesignTab() {
                 <SectionTitle>Border Radius</SectionTitle>
                 <div className="flex items-center gap-3">
                   <Slider
-                    defaultValue={[selectedObjectProps.rx || 0]}
+                    value={[selectedObjectProps.rx || 0]}
                     min={0} max={60} step={1}
                     onValueChange={([v]) => { updateSelectedProp('rx', v); updateSelectedProp('ry', v) }}
                     className="flex-1"
                   />
-                  <span className="text-xs text-gray-600 w-6 text-right">{selectedObjectProps.rx || 0}</span>
+                  <span className="text-xs text-slate-600 w-6 text-right font-semibold">{selectedObjectProps.rx || 0}</span>
                 </div>
               </div>
             </>
@@ -355,21 +409,33 @@ function TextProperties({ canvas, props }) {
     const active = canvas.getActiveObjects()
     active.forEach((obj) => obj.set(prop, value))
     canvas.renderAll()
+    
+    const store = useEditorStore.getState()
+    if (store.selectedObjectProps) {
+      store.setSelectedObjectProps({
+        ...store.selectedObjectProps,
+        [prop]: value
+      })
+    }
   }
 
   const fontFamilies = [
     'Arial', 'Georgia', 'Times New Roman', 'Courier New',
-    'Verdana', 'Trebuchet MS', 'Impact', 'Comic Sans MS',
-    'Palatino', 'Garamond',
+    'Verdana', 'Trebuchet MS', 'Impact',
+    'Inter', 'Playfair Display', 'Lora', 'Montserrat',
+    'Oswald', 'Cinzel', 'Bodoni Moda', 'Marcellus', 'Outfit',
+    'Alex Brush', 'Great Vibes', 'Sacramento', 'Pinyon Script'
   ]
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <SectionTitle>Typography</SectionTitle>
+      
+      {/* Font Family Selection */}
       <div>
         <Label className="text-[10px] text-gray-500">Font Family</Label>
         <Select defaultValue={props.fontFamily || 'Arial'} onValueChange={(v) => updateProp('fontFamily', v)}>
-          <SelectTrigger className="h-8 text-xs mt-0.5">
+          <SelectTrigger className="h-8 text-xs mt-0.5 border-slate-200">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -379,43 +445,97 @@ function TextProperties({ canvas, props }) {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex gap-2">
-        <div className="flex-1">
-          <Label className="text-[10px] text-gray-500">Size</Label>
-          <Input type="number" defaultValue={props.fontSize || 16} className="h-8 text-xs mt-0.5" onChange={(e) => updateProp('fontSize', Number(e.target.value))} />
-        </div>
-        <div className="flex-1">
-          <Label className="text-[10px] text-gray-500">Spacing</Label>
-          <Input type="number" defaultValue={props.charSpacing || 0} className="h-8 text-xs mt-0.5" onChange={(e) => updateProp('charSpacing', Number(e.target.value))} />
-        </div>
-      </div>
+
+      {/* Font Size Control */}
       <div>
-        <Label className="text-[10px] text-gray-500 mb-1.5 block">Style</Label>
-        <div className="flex gap-1">
-          <button
-            onClick={() => updateProp('fontWeight', props.fontWeight === 'bold' ? 'normal' : 'bold')}
-            className={cn('w-8 h-8 flex items-center justify-center rounded-lg border text-sm transition-colors', props.fontWeight === 'bold' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50')}
-          ><Bold size={13} /></button>
-          <button
-            onClick={() => updateProp('fontStyle', props.fontStyle === 'italic' ? 'normal' : 'italic')}
-            className={cn('w-8 h-8 flex items-center justify-center rounded-lg border text-sm transition-colors', props.fontStyle === 'italic' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50')}
-          ><Italic size={13} /></button>
-          <button
-            onClick={() => updateProp('underline', !props.underline)}
-            className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 hover:bg-gray-50 text-sm"
-          ><Underline size={13} /></button>
+        <div className="flex items-center justify-between mb-1.5">
+          <Label className="text-[10px] text-gray-500">Font Size</Label>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="w-6 h-6 border-slate-200 hover:bg-slate-50"
+              onClick={() => {
+                const newSize = Math.max(4, (props.fontSize || 16) - 1)
+                updateProp('fontSize', newSize)
+              }}
+            >
+              -
+            </Button>
+            <Input
+              type="number"
+              value={props.fontSize || 16}
+              className="w-10 h-6 text-center text-xs p-0 border-slate-200"
+              onChange={(e) => updateProp('fontSize', Math.max(1, Number(e.target.value)))}
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              className="w-6 h-6 border-slate-200 hover:bg-slate-50"
+              onClick={() => {
+                const newSize = (props.fontSize || 16) + 1
+                updateProp('fontSize', newSize)
+              }}
+            >
+              +
+            </Button>
+          </div>
         </div>
+        <Slider
+          value={[props.fontSize || 16]}
+          min={6}
+          max={120}
+          step={1}
+          onValueChange={([v]) => updateProp('fontSize', v)}
+          className="mt-1"
+        />
       </div>
+
+      {/* Character Spacing Control */}
       <div>
-        <Label className="text-[10px] text-gray-500 mb-1.5 block">Alignment</Label>
-        <div className="flex gap-1">
-          {[{ icon: AlignLeft, value: 'left' }, { icon: AlignCenter, value: 'center' }, { icon: AlignRight, value: 'right' }].map(({ icon: Icon, value }) => (
+        <div className="flex items-center justify-between mb-1.5">
+          <Label className="text-[10px] text-gray-500">Letter Spacing</Label>
+          <span className="text-[10px] text-gray-500 font-mono">{props.charSpacing || 0}</span>
+        </div>
+        <Slider
+          value={[props.charSpacing || 0]}
+          min={-50}
+          max={300}
+          step={5}
+          onValueChange={([v]) => updateProp('charSpacing', v)}
+        />
+      </div>
+
+      {/* Style & Alignment Controls */}
+      <div className="grid grid-cols-2 gap-3 pt-1">
+        <div>
+          <Label className="text-[10px] text-gray-500 mb-1.5 block">Style</Label>
+          <div className="flex gap-1">
             <button
-              key={value}
-              onClick={() => updateProp('textAlign', value)}
-              className={cn('flex-1 h-8 flex items-center justify-center rounded-lg border transition-colors', props.textAlign === value ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50')}
-            ><Icon size={13} /></button>
-          ))}
+              onClick={() => updateProp('fontWeight', props.fontWeight === 'bold' ? 'normal' : 'bold')}
+              className={cn('w-8 h-8 flex items-center justify-center rounded-lg border text-sm transition-colors', props.fontWeight === 'bold' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50')}
+            ><Bold size={13} /></button>
+            <button
+              onClick={() => updateProp('fontStyle', props.fontStyle === 'italic' ? 'normal' : 'italic')}
+              className={cn('w-8 h-8 flex items-center justify-center rounded-lg border text-sm transition-colors', props.fontStyle === 'italic' ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50')}
+            ><Italic size={13} /></button>
+            <button
+              onClick={() => updateProp('underline', !props.underline)}
+              className={cn('w-8 h-8 flex items-center justify-center rounded-lg border text-sm transition-colors', props.underline ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50')}
+            ><Underline size={13} /></button>
+          </div>
+        </div>
+        <div>
+          <Label className="text-[10px] text-gray-500 mb-1.5 block">Alignment</Label>
+          <div className="flex gap-1">
+            {[{ icon: AlignLeft, value: 'left' }, { icon: AlignCenter, value: 'center' }, { icon: AlignRight, value: 'right' }].map(({ icon: Icon, value }) => (
+              <button
+                key={value}
+                onClick={() => updateProp('textAlign', value)}
+                className={cn('flex-1 h-8 flex items-center justify-center rounded-lg border transition-colors', props.textAlign === value ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-200 hover:bg-gray-50')}
+              ><Icon size={13} /></button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

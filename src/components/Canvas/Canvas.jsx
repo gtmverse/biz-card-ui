@@ -4,7 +4,10 @@ import useEditorStore from '@/store/editorStore'
 import { buildCard } from '@/utils/canvasHelpers'
 import { addImageToCanvas } from '@/utils/imageHelpers'
 import { isLogoCircle, replaceLogoWithFile } from '@/utils/logoHelpers'
+import { isAvatarCircle, replaceAvatarWithFile } from '@/utils/avatarHelpers'
 import { templates } from '@/templates'
+import FloatingToolbar from '@/components/Toolbar/FloatingToolbar'
+
 
 export default function Canvas() {
   const canvasRef    = useRef(null)
@@ -13,9 +16,12 @@ export default function Canvas() {
   const containerRef  = useRef(null)
   const imageInputRef = useRef(null)
   const logoInputRef  = useRef(null)
+  const avatarInputRef = useRef(null)
   const initializedRef = useRef(false)
+  const builtTemplateRef = useRef(null)  // tracks what's actually drawn on canvas
 
   const {
+    canvas,
     setCanvas,
     activeTool,
     selectedTemplate,
@@ -47,13 +53,16 @@ export default function Canvas() {
     setLayers(layers)
   }, [setLayers])
 
-  // ─── Init Fabric canvas ──────────────────────────────────────────────────
+  // ─── Init Fabric canvas
   useEffect(() => {
+    let active = true
     let fabricCanvas = null
     let unsubTemplate = null
+    let keydownHandler = null
 
     const initCanvas = async () => {
       const { fabric } = await import('fabric')
+      if (!active) return
 
       fabricCanvas = new fabric.Canvas(canvasRef.current, {
         width: 900,
@@ -75,61 +84,27 @@ export default function Canvas() {
       fabricLibRef.current = fabric   // cache so effects never re-import
       setCanvas(fabricCanvas)
 
-      // Build whichever template is currently selected in the store
-      const initialTemplate = useEditorStore.getState().selectedTemplate
-      buildCard(fabricCanvas, fabric, initialTemplate, 'front')
-      useEditorStore.getState().setCanvasBgSilent(fabricCanvas.backgroundColor)
-      syncLayers(fabricCanvas)
-      pushHistory(fabricCanvas.toJSON(['name', 'locked', '__uid']))
+      // Zoom-to-fit on initialization (defaults to landscape 900x540)
+      const container = containerRef.current
+      const W = 900
+      const H = 540
+      const pad    = 130
+      const availW = container ? container.clientWidth  - pad : W
+      const availH = container ? container.clientHeight - pad : H
+      const fitScale = Math.min(availW / W, availH / H, 1)
+      const newZoom  = Math.max(25, Math.round(fitScale * 100))
+      const s = newZoom / 100
+      const store = useEditorStore.getState()
+      store.setZoom(newZoom)
+      fabricCanvas.setViewportTransform([s, 0, 0, s, 0, 0])
+      fabricCanvas.setWidth(W  * s)
+      fabricCanvas.setHeight(H * s)
+      fabricCanvas.renderAll()
+
       initializedRef.current = true
 
-      // ── Subscribe to template changes via Zustand ────────────────────────
-      // Using subscribe() instead of useEffect([selectedTemplate]) because
-      // React StrictMode double-invokes effects with async init, causing a
-      // timing window where fabricRef may be null when the effect fires.
-      // Zustand subscribe is synchronous and always sees the current ref value.
-      unsubTemplate = useEditorStore.subscribe((state, prevState) => {
-        if (state.selectedTemplate === prevState.selectedTemplate) return
 
-        const canvas = fabricRef.current
-        const fab    = fabricLibRef.current
-        if (!canvas || !fab) return
-
-        const newTemplate = state.selectedTemplate
-        const tmpl        = templates.find(t => t.id === newTemplate)
-        const isVertical  = tmpl?.orientation === 'vertical'
-        const W = isVertical ? 540 : 900
-        const H = isVertical ? 900 : 540
-
-        canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
-        canvas.setWidth(W)
-        canvas.setHeight(H)
-
-        const store = useEditorStore.getState()
-        store.setCardDimensions(W, H)
-        store.resetSideJSON()
-        store.setCurrentSide('front')
-
-        const bgColor = buildCard(canvas, fab, newTemplate, 'front')
-        store.setCanvasBgSilent(bgColor || canvas.backgroundColor)
-        syncLayers(canvas)
-        pushHistory(canvas.toJSON(['name', 'locked', '__uid']))
-
-        const container = containerRef.current
-        const pad    = 80
-        const availW = container ? container.clientWidth  - pad : W
-        const availH = container ? container.clientHeight - pad : H
-        const fitScale = Math.min(availW / W, availH / H, 1)
-        const newZoom  = Math.max(25, Math.round(fitScale * 100))
-        const s = newZoom / 100
-        store.setZoom(newZoom)
-        canvas.setViewportTransform([s, 0, 0, s, 0, 0])
-        canvas.setWidth(W  * s)
-        canvas.setHeight(H * s)
-        canvas.renderAll()
-      })
-
-      // ── Events ────────────────────────────────────────────────────────
+      // ── Events
 
       const handleSelection = () => {
         const objs = fabricCanvas.getActiveObjects()
@@ -179,30 +154,235 @@ export default function Canvas() {
           // Double-clicking a logo placeholder opens the logo file picker
           fabricCanvas.setActiveObject(target)
           if (logoInputRef.current) logoInputRef.current.click()
+        } else if (isAvatarCircle(target)) {
+          // Double-clicking an avatar placeholder opens the avatar file picker
+          fabricCanvas.setActiveObject(target)
+          if (avatarInputRef.current) avatarInputRef.current.click()
         }
       })
 
       fabricCanvas.on('object:modified', () => {
+        handleSelection()
         syncLayers(fabricCanvas)
         pushHistory(fabricCanvas.toJSON(['name', 'locked', '__uid']))
       })
+      fabricCanvas.on('text:changed', (opt) => {
+        const obj = opt.target
+        if (!obj) return
+        const fieldName = obj.name?.toLowerCase()
+        if (fieldName) {
+          const store = useEditorStore.getState()
+          let key = fieldName
+          if (fieldName === 'alt phone') key = 'altPhone'
+          store.setProfileDetail(key, obj.text)
+        }
+      })
       fabricCanvas.on('object:added',   () => syncLayers(fabricCanvas))
       fabricCanvas.on('object:removed', () => syncLayers(fabricCanvas))
+
+      // ── Keyboard Shortcuts
+      let clipboard = null
+      
+      const handleKeyDown = (e) => {
+        // Prevent default actions for shortcuts if we are editing text, unless they are specific commands
+        const activeObj = fabricCanvas.getActiveObject()
+        const isEditingText = (activeObj && activeObj.isEditing) || 
+                              document.activeElement?.tagName === 'INPUT' || 
+                              document.activeElement?.tagName === 'TEXTAREA'
+        
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0
+        const cmdCtrl = isMac ? e.metaKey : e.ctrlKey
+
+        // Undo (Cmd/Ctrl + Z)
+        if (cmdCtrl && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+          e.preventDefault()
+          useEditorStore.getState().undo()
+          return
+        }
+        
+        // Redo (Cmd/Ctrl + Shift + Z or Cmd/Ctrl + Y)
+        if ((cmdCtrl && e.shiftKey && e.key.toLowerCase() === 'z') || (cmdCtrl && e.key.toLowerCase() === 'y')) {
+          e.preventDefault()
+          useEditorStore.getState().redo()
+          return
+        }
+
+        // If editing text, ignore other shortcuts (let the text editor handle copy/paste/delete)
+        if (isEditingText) return
+
+        // Delete / Backspace
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          e.preventDefault()
+          const activeObjects = fabricCanvas.getActiveObjects()
+          if (activeObjects.length > 0) {
+            activeObjects.forEach(obj => fabricCanvas.remove(obj))
+            fabricCanvas.discardActiveObject()
+            fabricCanvas.renderAll()
+          }
+          return
+        }
+
+        // Copy (Cmd/Ctrl + C)
+        if (cmdCtrl && e.key.toLowerCase() === 'c') {
+          if (activeObj) {
+            e.preventDefault()
+            activeObj.clone((cloned) => { clipboard = cloned })
+          }
+          return
+        }
+
+        // Paste (Cmd/Ctrl + V)
+        if (cmdCtrl && e.key.toLowerCase() === 'v') {
+          if (!clipboard) return
+          e.preventDefault()
+          clipboard.clone((clonedObj) => {
+            fabricCanvas.discardActiveObject()
+            clonedObj.set({
+              left: clonedObj.left + 10,
+              top: clonedObj.top + 10,
+              evented: true,
+            })
+            if (clonedObj.type === 'activeSelection') {
+              clonedObj.canvas = fabricCanvas
+              clonedObj.forEachObject((obj) => {
+                fabricCanvas.add(obj)
+              })
+              clonedObj.setCoords()
+            } else {
+              fabricCanvas.add(clonedObj)
+            }
+            clipboard.top += 10
+            clipboard.left += 10
+            fabricCanvas.setActiveObject(clonedObj)
+            fabricCanvas.renderAll()
+          })
+          return
+        }
+
+        // Duplicate (Cmd/Ctrl + D)
+        if (cmdCtrl && e.key.toLowerCase() === 'd') {
+          if (activeObj) {
+            e.preventDefault()
+            activeObj.clone((clonedObj) => {
+              fabricCanvas.discardActiveObject()
+              clonedObj.set({
+                left: clonedObj.left + 10,
+                top: clonedObj.top + 10,
+                evented: true,
+              })
+              if (clonedObj.type === 'activeSelection') {
+                clonedObj.canvas = fabricCanvas
+                clonedObj.forEachObject((obj) => {
+                  fabricCanvas.add(obj)
+                })
+                clonedObj.setCoords()
+              } else {
+                fabricCanvas.add(clonedObj)
+              }
+              fabricCanvas.setActiveObject(clonedObj)
+              fabricCanvas.renderAll()
+            })
+          }
+          return
+        }
+        
+        // Deselect (Escape)
+        if (e.key === 'Escape') {
+          fabricCanvas.discardActiveObject()
+          fabricCanvas.renderAll()
+          return
+        }
+      }
+      keydownHandler = handleKeyDown
+      window.addEventListener('keydown', handleKeyDown)
+      
+      // Cleanup window listener on unmount
+      fabricCanvas.on('dispose', () => {
+        window.removeEventListener('keydown', handleKeyDown)
+      })
     }
 
     initCanvas()
 
     return () => {
-      if (unsubTemplate) unsubTemplate()
+      active = false
       initializedRef.current = false
-      if (fabricRef.current) {
-        fabricRef.current.dispose()
+      builtTemplateRef.current = null  // reset so next init rebuilds correctly
+      if (keydownHandler) {
+        window.removeEventListener('keydown', keydownHandler)
+      }
+      if (unsubTemplate) unsubTemplate()  // stop Zustand subscription
+      
+      const fc = fabricRef.current || fabricCanvas
+      if (fc) {
+        try {
+          fc.dispose()
+        } catch (e) {
+          console.warn('Error disposing fabric canvas:', e)
+        }
         fabricRef.current = null
       }
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Tool change ─────────────────────────────────────────────────────────
+  // ─── Rebuild canvas template on selectedTemplate change ────────────────────
+  useEffect(() => {
+    const cv = fabricRef.current
+    const fb = fabricLibRef.current
+    if (!cv || !fb || !initializedRef.current) return
+
+    const tpl = templates.find(t => t.id === selectedTemplate)
+    if (!tpl) return
+    const isVert = tpl.orientation === 'vertical'
+    const isSquare = tpl.orientation === 'square'
+    const W = isSquare ? 720 : (isVert ? 540 : 900)
+    const H = isSquare ? 720 : (isVert ? 900 : 540)
+
+    if (builtTemplateRef.current === selectedTemplate) return
+
+    // Reset viewport transform and dimensions before building
+    cv.setViewportTransform([1, 0, 0, 1, 0, 0])
+    cv.setWidth(W)
+    cv.setHeight(H)
+
+    const store = useEditorStore.getState()
+    store.setCardDimensions(W, H)
+    store.resetSideJSON()
+    store.setCurrentSide('front')
+
+    const bg = buildCard(cv, fb, selectedTemplate, 'front')
+    builtTemplateRef.current = selectedTemplate
+    store.setCanvasBgSilent(bg || cv.backgroundColor)
+
+    // Sync layers and history
+    const layers = cv.getObjects().map((obj, i) => ({
+      id: obj.__uid || `layer-${i}`,
+      name: obj.name || obj.type || `Layer ${i + 1}`,
+      type: obj.type,
+      visible: obj.visible !== false,
+      locked: !!obj.lockMovementX,
+      index: i,
+    })).reverse()
+    store.setLayers(layers)
+    store.pushHistory(cv.toJSON(['name', 'locked', '__uid']))
+
+    // Zoom-to-fit
+    const container = containerRef.current
+    const pad = 80
+    const availW = container ? container.clientWidth - pad : W
+    const availH = container ? container.clientHeight - pad : H
+    const fitScale = Math.min(availW / W, availH / H, 1)
+    const newZoom = Math.max(25, Math.round(fitScale * 100))
+    const s = newZoom / 100
+    store.setZoom(newZoom)
+    cv.setViewportTransform([s, 0, 0, s, 0, 0])
+    cv.setWidth(W * s)
+    cv.setHeight(H * s)
+    cv.renderAll()
+  }, [canvas, selectedTemplate])
+
+
+  // ─── Tool change
   useEffect(() => {
     const canvas = fabricRef.current
     const fabric = fabricLibRef.current
@@ -233,44 +413,46 @@ export default function Canvas() {
           break
 
         case 'text': {
-          canvas.selection = false
-          canvas.defaultCursor = 'text'
-          canvas.on('mouse:down', (opt) => {
-            if (opt.target) return
-            const pointer = canvas.getPointer(opt.e)
-            const t = new fabric.IText('Click to edit', {
-              left: pointer.x, top: pointer.y,
-              fontSize: 20, fill: '#1f2937',
-              fontFamily: 'Inter, sans-serif', name: 'Text',
-            })
-            canvas.add(t)
-            canvas.setActiveObject(t)
-            t.enterEditing()
-            canvas.renderAll()
+          const t = new fabric.IText('Click to edit', {
+            left: canvas.width / 2, 
+            top: canvas.height / 2,
+            originX: 'center',
+            originY: 'center',
+            fontSize: 20, fill: '#1f2937',
+            fontFamily: 'Inter, sans-serif', name: 'Text',
           })
+          canvas.add(t)
+          canvas.setActiveObject(t)
+          t.enterEditing()
+          t.selectAll()
+          canvas.renderAll()
+          
+          // Reset tool
+          useEditorStore.getState().setActiveTool('select')
           break
         }
 
+        case 'shape':
         case 'rect': {
-          canvas.selection = false
-          canvas.defaultCursor = 'crosshair'
-          let drawing = false, sx, sy, rect
-          canvas.on('mouse:down', (opt) => {
-            if (opt.target) return
-            drawing = true
-            const p = canvas.getPointer(opt.e)
-            sx = p.x; sy = p.y
-            rect = new fabric.Rect({ left: sx, top: sy, width: 0, height: 0,
-              fill: 'rgba(79,70,229,0.2)', stroke: '#4F46E5', strokeWidth: 1, rx: 4, name: 'Rectangle' })
-            canvas.add(rect)
+          const rect = new fabric.Rect({ 
+            left: canvas.width / 2, 
+            top: canvas.height / 2, 
+            originX: 'center',
+            originY: 'center',
+            width: 100, 
+            height: 100,
+            fill: 'rgba(79,70,229,0.2)', 
+            stroke: '#4F46E5', 
+            strokeWidth: 2, 
+            rx: 8, 
+            name: 'Rectangle' 
           })
-          canvas.on('mouse:move', (opt) => {
-            if (!drawing) return
-            const p = canvas.getPointer(opt.e)
-            rect.set({ width: Math.abs(p.x - sx), height: Math.abs(p.y - sy), left: Math.min(p.x, sx), top: Math.min(p.y, sy) })
-            canvas.renderAll()
-          })
-          canvas.on('mouse:up', () => { drawing = false; canvas.setActiveObject(rect) })
+          canvas.add(rect)
+          canvas.setActiveObject(rect)
+          canvas.renderAll()
+          
+          // Reset tool
+          useEditorStore.getState().setActiveTool('select')
           break
         }
 
@@ -337,7 +519,7 @@ export default function Canvas() {
       }
   }, [activeTool])
 
-  // ─── Zoom ────────────────────────────────────────────────────────────────
+  // ─── Zoom 
   const handleZoom = (delta) => {
     const newZoom = Math.max(25, Math.min(200, zoom + delta))
     setZoom(newZoom)
@@ -365,19 +547,44 @@ export default function Canvas() {
     if (currentSide === 'front') store.setFrontJSON(json)
     else                          store.setBackJSON(json)
 
-    // Load the other side (from saved JSON, or build the default)
-    const savedJSON = newSide === 'front' ? store.frontJSON : store.backJSON
+    // Load the other side (re-read from store AFTER saving so we see the latest frontJSON/backJSON)
+    const latestStore = useEditorStore.getState()
+    const savedJSON = newSide === 'front' ? latestStore.frontJSON : latestStore.backJSON
+
+    const { cardWidth: cW, cardHeight: cH, zoom } = useEditorStore.getState()
 
     if (savedJSON) {
+      // Reset viewport transform and dimensions before loading
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+      canvas.setWidth(cW)
+      canvas.setHeight(cH)
+
       canvas.loadFromJSON(savedJSON, () => {
+        // Reapply zoom after loading
+        const s = zoom / 100
+        canvas.setViewportTransform([s, 0, 0, s, 0, 0])
+        canvas.setWidth(cW * s)
+        canvas.setHeight(cH * s)
         canvas.renderAll()
         syncLayers(canvas)
       })
     } else {
+      // IMPORTANT: reset to actual card dimensions before building.
+      canvas.setViewportTransform([1, 0, 0, 1, 0, 0])
+      canvas.setWidth(cW)
+      canvas.setHeight(cH)
+
       const bgColor = buildCard(canvas, fabric, store.selectedTemplate, newSide)
       store.setCanvasBgSilent(bgColor || canvas.backgroundColor)
       syncLayers(canvas)
       pushHistory(canvas.toJSON(['name', 'locked', '__uid']))
+
+      // Reapply zoom after building
+      const s = zoom / 100
+      canvas.setViewportTransform([s, 0, 0, s, 0, 0])
+      canvas.setWidth(cW * s)
+      canvas.setHeight(cH * s)
+      canvas.renderAll()
     }
 
     setCurrentSide(newSide)
@@ -403,6 +610,13 @@ export default function Canvas() {
     e.target.value = ''
   }
 
+  const handleAvatarFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !fabricRef.current) return
+    await replaceAvatarWithFile(fabricRef.current, file)
+    e.target.value = ''
+  }
+
   // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -422,60 +636,69 @@ export default function Canvas() {
         className="hidden"
         onChange={handleLogoFileChange}
       />
+      {/* Avatar replacement picker (triggered by dblclick on avatar circles) */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+        className="hidden"
+        onChange={handleAvatarFileChange}
+      />
 
-      {/* Front / Back side toggle */}
-      <div className="flex items-center justify-center gap-0 py-2.5 bg-white border-b border-gray-100 shrink-0">
-        <span className="text-xs text-gray-400 mr-3 font-medium">Card Side:</span>
-        <div className="flex rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+      {/* Unified Bottom Floating Control Bar */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 p-1.5 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-200/80 shrink-0">
+        {/* Front / Back Toggle */}
+        <div className="flex bg-slate-100/60 p-0.5 rounded-lg border border-slate-200/30">
           {['front', 'back'].map((side) => (
             <button
               key={side}
               onClick={() => handleSideChange(side)}
-              className={`px-5 py-1.5 text-xs font-semibold transition-all duration-150 ${
+              className={`px-4 py-1.5 rounded-md text-[11px] font-bold transition-all duration-200 ${
                 currentSide === side
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-gray-500 hover:bg-gray-50'
+                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/10'
+                  : 'text-slate-500 hover:text-slate-800'
               }`}
             >
               {side === 'front' ? 'Front' : 'Back'}
             </button>
           ))}
         </div>
+
         {currentSide === 'back' && (
-          <span className="ml-3 text-[10px] text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
-            Editing Back Side
+          <span className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200/50 rounded-lg px-2 py-1 shrink-0">
+            Back Side
           </span>
         )}
-      </div>
 
-      {/* Zoom controls */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 bg-white rounded-xl shadow-lg border border-gray-100 px-2 py-1.5">
-        <button
-          onClick={() => handleZoom(-10)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
-        >
-          <ZoomOut size={15} />
-        </button>
-        <span className="text-xs font-medium text-gray-700 w-12 text-center">{zoom}%</span>
-        <button
-          onClick={() => handleZoom(10)}
-          className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
-        >
-          <ZoomIn size={15} />
-        </button>
+        <div className="w-px h-5 bg-slate-200" />
+
+        {/* Zoom controls */}
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={() => handleZoom(-10)}
+            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+          >
+            <ZoomOut size={14} />
+          </button>
+          <span className="text-[11px] font-bold text-slate-700 w-10 text-center">{zoom}%</span>
+          <button
+            onClick={() => handleZoom(10)}
+            className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+          >
+            <ZoomIn size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Workspace */}
       <div
         ref={containerRef}
-        className="flex-1 canvas-workspace overflow-auto relative"
-        style={{ background: '#f1f5f9' }}
+        className="canvas-workspace flex-1 overflow-auto relative"
       >
-        <div className="min-h-full min-w-full flex items-center justify-center p-10">
-          <div
-            className="relative shadow-2xl"
-            style={{ boxShadow: '0 25px 60px rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.1)' }}
-          >
+        <FloatingToolbar />
+        
+        <div className="min-h-full min-w-full flex items-center justify-center p-10 pt-24">
+          <div className="fabric-canvas-wrapper relative flex-shrink-0">
             <canvas ref={canvasRef} className="block" />
           </div>
         </div>

@@ -1,4 +1,5 @@
 import useEditorStore from '@/store/editorStore'
+import { buildCard } from '@/utils/canvasHelpers'
 
 const EXPORT_MULTIPLIER = 2
 
@@ -52,6 +53,62 @@ export function downloadCanvas(canvas, format = 'png') {
         triggerDownload(url, 'bizcard.svg')
         URL.revokeObjectURL(url)
         break
+      }
+
+      case 'zip': {
+        const store = useEditorStore.getState()
+        const { cardWidth, cardHeight, selectedTemplate, frontJSON, backJSON, currentSide } = store
+        
+        // Ensure current side is saved to JSON before exporting
+        if (currentSide === 'front') store.setFrontJSON(canvas.toJSON(['name', 'locked', '__uid']))
+        if (currentSide === 'back') store.setBackJSON(canvas.toJSON(['name', 'locked', '__uid']))
+
+        restore() // restore active canvas immediately
+
+        const captureOffscreen = async (sideName, savedJSON) => {
+          const { fabric } = await import('fabric')
+          return new Promise((resolve) => {
+            const el = document.createElement('canvas')
+            el.width = cardWidth
+            el.height = cardHeight
+            const tmp = new fabric.Canvas(el, { width: cardWidth, height: cardHeight, enableRetinaScaling: false })
+            
+            if (savedJSON) {
+              tmp.loadFromJSON(savedJSON, () => {
+                tmp.renderAll()
+                const dataURL = tmp.toDataURL({ format: 'png', multiplier: EXPORT_MULTIPLIER })
+                tmp.dispose()
+                resolve(dataURL.split(',')[1]) // Get base64 part
+              })
+            } else {
+              buildCard(tmp, fabric, selectedTemplate, sideName)
+              setTimeout(() => {
+                tmp.renderAll()
+                const dataURL = tmp.toDataURL({ format: 'png', multiplier: EXPORT_MULTIPLIER })
+                tmp.dispose()
+                resolve(dataURL.split(',')[1])
+              }, 150)
+            }
+          })
+        }
+
+        const runZip = async () => {
+          const frontBase64 = await captureOffscreen('front', store.frontJSON || (currentSide === 'front' ? canvas.toJSON(['name', 'locked', '__uid']) : null))
+          const backBase64 = await captureOffscreen('back', store.backJSON || (currentSide === 'back' ? canvas.toJSON(['name', 'locked', '__uid']) : null))
+          
+          const JSZip = (await import('jszip')).default
+          const zip = new JSZip()
+          zip.file('front.png', frontBase64, { base64: true })
+          zip.file('back.png', backBase64, { base64: true })
+          
+          const blob = await zip.generateAsync({ type: 'blob' })
+          const url = URL.createObjectURL(blob)
+          triggerDownload(url, 'bizcard-export.zip')
+          URL.revokeObjectURL(url)
+        }
+        
+        runZip()
+        return // return early so we don't call restore() again
       }
 
       case 'pdf': {

@@ -213,6 +213,7 @@ const storeApi = subscribeWithSelector((set, get) => ({
   logout: () => {
     try {
       localStorage.removeItem('bizcard_user')
+      localStorage.removeItem('bizcard_token')
       localStorage.removeItem('bizcard_skip_landing')
     } catch (e) {}
     set({ user: null, skipLandingPage: false })

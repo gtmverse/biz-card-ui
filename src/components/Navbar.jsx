@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Sparkles, LogOut, CheckCircle2, Pencil, Check, Undo2, Redo2, Eye, ChevronDown, Crown, FileDown, Archive, FileImage } from 'lucide-react'
+import { Sparkles, LogOut, CheckCircle2, Pencil, Check, Undo2, Redo2, Eye, ChevronDown, Crown, FileDown, Archive, FileImage, Save, Loader2 } from 'lucide-react'
 import useEditorStore from '@/store/editorStore'
 import { downloadCanvas } from '@/utils/downloadHelpers'
 import { cn } from '@/lib/utils'
+import { saveCard } from '@/api/cards'
 
 export default function Navbar() {
   const { 
@@ -14,12 +15,19 @@ export default function Navbar() {
     undo,
     redo,
     history,
-    historyIndex
+    historyIndex,
+    profileDetails,
+    selectedTemplate,
+    frontJSON,
+    backJSON,
   } = useEditorStore()
   const [docName, setDocName] = useState('Untitled Design')
   const [editing, setEditing] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState(null) // 'saved' | 'error' | null
+  const [savedCardId, setSavedCardId] = useState(null)
   const inputRef = useRef(null)
   
   const exportRef = useRef(null)
@@ -43,6 +51,41 @@ export default function Navbar() {
   const handleExport = (format) => {
     setExportOpen(false)
     if (canvas) downloadCanvas(canvas, format)
+  }
+
+  const handleSave = async () => {
+    if (!user) {
+      setAuthModalOpen(true)
+      return
+    }
+    setSaving(true)
+    setSaveStatus(null)
+    try {
+      // Capture latest canvas JSON before saving
+      const currentJSON = canvas ? canvas.toJSON() : null
+      const store = useEditorStore.getState()
+      const { currentSide } = store
+      const fJson = currentSide === 'front' ? currentJSON : store.frontJSON
+      const bJson = currentSide === 'back'  ? currentJSON : store.backJSON
+
+      const saved = await saveCard({
+        cardId: savedCardId,
+        name: docName,
+        profileDetails,
+        selectedTemplate,
+        frontJSON: fJson,
+        backJSON: bJson,
+      })
+      setSavedCardId(saved.id)
+      setSaveStatus('saved')
+      setTimeout(() => setSaveStatus(null), 3000)
+    } catch (err) {
+      setSaveStatus('error')
+      console.error('Save failed:', err)
+      setTimeout(() => setSaveStatus(null), 4000)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -100,11 +143,18 @@ export default function Navbar() {
 
         {/* Auto-saved pill */}
         <div className="hidden sm:flex items-center gap-2 shrink-0 ml-4">
-          <CheckCircle2 size={16} className="text-emerald-500" />
-          <div className="flex flex-col">
-            <span className="text-[11px] font-semibold text-slate-700 leading-tight">All changes saved</span>
-            <span className="text-[10px] text-slate-500 leading-tight">Just now</span>
-          </div>
+          {saveStatus === 'saved' && (
+            <>
+              <CheckCircle2 size={16} className="text-emerald-500" />
+              <div className="flex flex-col">
+                <span className="text-[11px] font-semibold text-slate-700 leading-tight">Saved to cloud</span>
+                <span className="text-[10px] text-slate-500 leading-tight">Just now</span>
+              </div>
+            </>
+          )}
+          {saveStatus === 'error' && (
+            <span className="text-[11px] font-semibold text-red-500">Save failed</span>
+          )}
         </div>
       </div>
 
@@ -144,6 +194,16 @@ export default function Navbar() {
         >
           <Eye size={14} />
           Preview
+        </button>
+
+        {/* Save button */}
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors text-[13px] font-medium disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          {saving ? 'Saving…' : 'Save'}
         </button>
         
         <div className="relative" ref={exportRef}>

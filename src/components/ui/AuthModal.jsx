@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
-import { X, Mail, Lock, User, ShieldCheck, Loader2 } from 'lucide-react'
+import React, { useState } from 'react'
+import { X, Mail, User, ShieldCheck, Loader2 } from 'lucide-react'
 import useEditorStore from '@/store/editorStore'
+import api from '@/api'
 import { Button } from './button'
 import { Input } from './input'
 import { Label } from './label'
@@ -17,7 +18,7 @@ export default function AuthModal() {
 
   if (!authModalOpen) return null
 
-  const handleEmailAuth = (e, type) => {
+  const handleEmailAuth = async (e, type) => {
     e.preventDefault()
     setError('')
     if (!email || !password || (type === 'signup' && !name)) {
@@ -27,12 +28,20 @@ export default function AuthModal() {
 
     setLoading(true)
     setLoadingMessage(type === 'signup' ? 'Creating your account...' : 'Logging you in...')
-    setTimeout(() => {
-      setLoading(false)
-      login({ name: name || email.split('@')[0], email, role: 'premium' })
+    try {
+      const endpoint = type === 'signup' ? '/auth/register' : '/auth/login'
+      const payload  = type === 'signup' ? { email, password, name } : { email, password }
+      const { data } = await api.post(endpoint, payload)
+      // Persist the JWT so the Axios interceptor sends it on every request
+      localStorage.setItem('bizcard_token', data.token)
+      login(data.user)
       setAuthModalOpen(false)
       resetForm()
-    }, 1200)
+    } catch (err) {
+      setError(err.response?.data?.error || err.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const resetForm = () => {

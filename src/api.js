@@ -1,7 +1,14 @@
 import axios from 'axios';
 
+const baseURL =
+  import.meta.env.VITE_API_BASE ||
+  import.meta.env.VITE_API_BASE_URL ||
+  'http://localhost:4000/api';
+
+const authScheme = import.meta.env.VITE_AUTH_TOKEN_SCHEME || 'Token';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api',
+  baseURL,
   withCredentials: true,
 });
 
@@ -9,7 +16,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('bizcard_token');
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `${authScheme} ${token}`;
   }
   return config;
 });

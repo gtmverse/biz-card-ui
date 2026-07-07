@@ -6,6 +6,100 @@ import { Button } from './button'
 import { Input } from './input'
 import { Label } from './label'
 
+const AUTH_ROUTE_STYLE = import.meta.env.VITE_AUTH_ROUTE_STYLE || 'legacy'
+
+const AUTH_ENDPOINTS = {
+  modern: {
+    signin: ['/auth/signin', '/auth/login'],
+    signup: ['/auth/signup', '/auth/register'],
+  },
+  legacy: {
+    signin: ['/auth/login', '/auth/signin'],
+    signup: ['/auth/register', '/auth/signup'],
+  },
+}
+
+function normalizeAuthResponse(data) {
+  if (!data) {
+    return { token: '', user: null }
+  }
+
+  if (data.user) {
+    return {
+      token: data.token,
+      user: data.user,
+    }
+  }
+
+  if (data.token && (data.id || data.email || data.name)) {
+    return {
+      token: data.token,
+      user: {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        avatar: data.avatar || '',
+      },
+    }
+  }
+
+  return {
+    token: data.token,
+    user: data.user || null,
+  }
+}
+
+async function postToAuthEndpoint(type, payload) {
+  const routeGroup = AUTH_ENDPOINTS[AUTH_ROUTE_STYLE] || AUTH_ENDPOINTS.legacy
+  const endpoints = routeGroup[type] || []
+  let lastError = null
+
+  for (const endpoint of endpoints) {
+    try {
+      return await api.post(endpoint, payload)
+    } catch (err) {
+      const status = err.response?.status
+      const isRouteMismatch = status === 404 || status === 405
+
+      if (isRouteMismatch) {
+        lastError = err
+        continue
+      }
+
+      throw err
+    }
+  }
+
+  throw lastError || new Error('Authentication endpoint is unavailable')
+}
+
+function getAuthErrorMessage(err) {
+  const status = err.response?.status
+  const serverMessage = err.response?.data?.message || err.response?.data?.error
+
+  if (!serverMessage && err.code === 'ERR_NETWORK') {
+    return 'We could not reach the server. Please check your connection and try again.'
+  }
+
+  if (typeof serverMessage === 'string') {
+    const normalizedMessage = serverMessage.toLowerCase()
+
+    if (
+      normalizedMessage.includes('can\'t reach database server') ||
+      normalizedMessage.includes('invalid `prisma.') ||
+      normalizedMessage.includes('postgres')
+    ) {
+      return 'The authentication service is temporarily unavailable. Please try again in a few minutes.'
+    }
+  }
+
+  if (status >= 500) {
+    return 'The authentication service is temporarily unavailable. Please try again in a few minutes.'
+  }
+
+  return serverMessage || err.message || 'Something went wrong'
+}
+
 export default function AuthModal() {
   const { authModalOpen, setAuthModalOpen, login } = useEditorStore()
   const [activeTab, setActiveTab] = useState('signin') // Default to Sign In
@@ -29,16 +123,21 @@ export default function AuthModal() {
     setLoading(true)
     setLoadingMessage(type === 'signup' ? 'Creating your account...' : 'Logging you in...')
     try {
-      const endpoint = type === 'signup' ? '/auth/register' : '/auth/login'
       const payload  = type === 'signup' ? { email, password, name } : { email, password }
-      const { data } = await api.post(endpoint, payload)
+      const { data } = await postToAuthEndpoint(type, payload)
+      const authData = normalizeAuthResponse(data)
+
+      if (!authData?.token || !authData?.user) {
+        throw new Error('Authentication response was incomplete')
+      }
+
       // Persist the JWT so the Axios interceptor sends it on every request
-      localStorage.setItem('bizcard_token', data.token)
-      login(data.user)
+      localStorage.setItem('bizcard_token', authData.token)
+      login(authData.user)
       setAuthModalOpen(false)
       resetForm()
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Something went wrong')
+      setError(getAuthErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -221,4 +320,3 @@ export default function AuthModal() {
     </div>
   )
 }
-
